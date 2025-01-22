@@ -1462,3 +1462,112 @@ public class Solution {
 }
 ```
 
+## [14. 最长公共前缀](https://leetcode.cn/problems/longest-common-prefix/)
+
+编写一个函数来查找字符串数组中的最长公共前缀。
+
+如果不存在公共前缀，返回空字符串 `""`。
+
+**示例 1：**
+
+```
+输入：strs = ["flower","flow","flight"]
+输出："fl"
+```
+
+**示例 2：**
+
+```
+输入：strs = ["dog","racecar","car"]
+输出：""
+解释：输入不存在公共前缀。
+```
+
+> **思路一：纵向扫描，从第一个位置开始，比较每个字符串的相同位置的字符是否相同。**
+
+```c#
+public string LongestCommonPrefix(string[] strs) {
+    if (strs == null || strs.Length == 0)
+        return "";
+
+    for (int i = 0; i < strs[0].Length; i++) {  // 以第一个字符串为基准
+        char c = strs[0][i];  // 当前字符
+        for (int j = 1; j < strs.Length; j++) {  // 遍历其他字符串
+            if (i >= strs[j].Length || strs[j][i] != c)  // 如果字符不匹配或长度不足
+                return strs[0].Substring(0, i);  // 返回当前前缀
+        }
+    }
+    return strs[0];  // 如果所有字符都匹配，返回第一个字符串
+}
+```
+
+> **思路二：横向扫描，依次比较每个字符串，逐步缩小公共前缀的范围。**
+
+```C#
+public class Solution {
+    public string LongestCommonPrefix(string[] strs) {
+        if (strs == null || strs.Length == 0) {
+            return "";
+        }
+
+        string prefix = strs[0];  // 假设第一个字符串是最长公共前缀
+        int count = strs.Length;
+
+        for (int i = 1; i < count; i++) {
+            prefix = LongestCommonPrefix(prefix, strs[i]);  // 更新 prefix
+            if (prefix.Length == 0) {  // 如果 prefix 为空，直接返回
+                break;
+            }
+        }
+
+        return prefix;
+    }
+
+    // 辅助函数：计算两个字符串的公共前缀
+    private string LongestCommonPrefix(string str1, string str2) {
+        int length = Math.Min(str1.Length, str2.Length);  // 取较短字符串的长度
+        int index = 0;
+
+        // 逐个字符比较
+        while (index < length && str1[index] == str2[index]) {
+            index++;
+        }
+
+        return str1.Substring(0, index);  // 返回公共前缀
+    }
+}
+```
+
+> **思路三：二分查找，将最长公共前缀的长度作为搜索范围，通过二分查找逐步缩小范围。**
+
+```C#
+public class Solution {
+    public string LongestCommonPrefix(string[] strs) {
+        if (strs == null || strs.Length == 0)
+            return "";
+
+        int minLen = strs.Min(s => s.Length);  // 找到最短字符串的长度
+        int low = 0, high = minLen;
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (IsCommonPrefix(strs, mid))
+                low = mid + 1;  // 尝试更长的前缀
+            else
+                high = mid - 1;  // 尝试更短的前缀
+        }
+
+        return strs[0].Substring(0, high);
+    }
+
+    private bool IsCommonPrefix(string[] strs, int len) {
+        string prefix = strs[0].Substring(0, len);  // 取第一个字符串的前 len 个字符
+        for (int i = 1; i < strs.Length; i++) {
+            if (!strs[i].StartsWith(prefix))
+                return false;
+        }
+        return true;
+    }
+}
+```
+
