@@ -1110,3 +1110,355 @@ public class Solution {
 }
 ```
 
+## [42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/)
+
+给定 `n` 个非负整数表示每个宽度为 `1` 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+
+**示例 1：**
+
+![img](https://assets.leetcode-cn.com/aliyun-lc-upload/uploads/2018/10/22/rainwatertrap.png)
+
+```
+输入：height = [0,1,0,2,1,0,1,3,2,1,2,1]
+输出：6
+解释：上面是由数组 [0,1,0,2,1,0,1,3,2,1,2,1] 表示的高度图，在这种情况下，可以接 6 个单位的雨水（蓝色部分表示雨水）。 
+```
+
+**示例 2：**
+
+```
+输入：height = [4,2,0,3,2,5]
+输出：9
+```
+
+> **思路一：暴力解法（会超时）。**
+
+```c#
+public class Solution {
+    public int Trap(int[] height) {
+        int n = height.Length;
+        // 1个柱子和2个柱子不能装水
+        if(n <= 2) {
+            return 0;
+        }
+
+        /**暴力解法：求每个柱子上面的雨水是多少格*/
+        int volume = 0;
+        for(int i=1; i<n-1; i++) {
+            int leftMax = 0;
+            int rightMax = 0;
+            GetLeftMaxAndRightMax(height, i, ref leftMax, ref rightMax);
+
+            // 短板效应，得到左右最高柱子中相对矮的柱子的高度
+            int minHeight = Math.Min(leftMax, rightMax);
+            if (minHeight > height[i]) {
+                volume += minHeight - height[i];
+            }
+        }
+
+        return volume;
+    }
+
+    // 用一次遍历得到某个柱子左边和右边的最高柱子
+    private void GetLeftMaxAndRightMax(int[] height, int pos, ref int leftMax, ref int rightMax) {
+        int lMax = 0;
+        int rMax = 0;
+        for(int i=0; i<height.Length; i++) {
+            if(i<pos)
+            {
+                // 左边
+                if(height[i] > lMax) {
+                    lMax = height[i];
+                }
+            }
+            else if(i > pos)
+            {
+                // 右边
+                if (height[i] > rMax) {
+                    rMax = height[i];
+                }
+            }
+        }
+        leftMax = lMax;
+        rightMax = rMax;
+    }
+}
+```
+
+> **思路二：单调栈+横向统计。**
+
+```C#
+public class Solution {
+    public int Trap(int[] height) {
+        int n = height.Length;
+        if(n<=2) {
+            return 0;
+        }
+        
+        int volume = 0;
+        Stack<int> stack = new Stack<int>();
+
+        for(int i=0; i<n; i++)
+        {
+            while(stack.Count>0 && height[stack.Peek()] < height[i]) {
+                int bottomIndex = stack.Pop(); // 弹出栈顶，作为凹槽的底部
+                if(stack.Count == 0) {
+                    break; // 如果栈为空，说明左边没有柱子，无法形成凹槽
+                }
+                int leftIndex = stack.Peek(); // 左边界是新的栈顶
+                int H = Math.Min(height[i], height[leftIndex]) - height[bottomIndex]; // 高度
+                int W = i - leftIndex - 1; // 宽度 = 右边界 - 左边界 - 1
+                volume += H * W;
+            }
+            stack.Push(i);
+        }
+        return volume;
+    }
+}
+```
+
+> **思路三：动态规划+纵向统计，分别维护1.当前柱子左侧的最大高度数组和2.当前柱子右侧的最大高度数组；每一位置能接到的雨水根据短板效应决定。**
+
+```c#
+public class Solution {
+    public int Trap(int[] height) {
+        int n = height.Length;
+        if(n<=2) {
+            return 0;
+        }
+        
+        int[] leftMax = new int[n]; // 当前柱子左侧的最大高度（包含自己）
+        int[] rightMax = new int[n];  // 当前柱子右侧的最大高度（包含自己）
+
+        // 遍历，计算每个柱子左侧的最大高度
+        leftMax[0] = height[0];
+        for(int i=1; i<n; i++) {
+            leftMax[i] = Math.Max(leftMax[i-1], height[i]);
+        }
+        // 遍历，计算每个柱子右侧的最大高度
+        rightMax[n-1] = height[n-1];
+        for(int i=n-2; i>=0; i--) {
+            rightMax[i] = Math.Max(rightMax[i+1], height[i]);
+        }
+
+        int volume = 0;
+        for(int i=0; i<n; i++) {
+            // 当前柱子上方的雨水量 = 左右最大高度的较小值 - 当前柱子的高度
+            volume += Math.Min(leftMax[i], rightMax[i]) - height[i];
+        }
+        return volume;
+    }
+}
+```
+
+> **思路四：双指针法+纵向统计，用两个指针遍历数组的每个元素，再用两个变量分别维护左指针左侧的最大高度和右指针右侧的最大高度；每一位置能接到的雨水根据短板效应决定。**
+
+```c#
+public class Solution {
+    public int Trap(int[] height) {
+        int n = height.Length;
+        if(n<=2) {
+            return 0;
+        }
+        
+        int lp = 0; // 左指针
+        int rp = n-1; // 右指针
+
+        int leftMax = height[lp]; // 左指针左侧的最大高度
+        int rightMax = height[rp]; // 右指针右侧的最大高度
+
+        int volume = 0;
+        while(lp <rp)
+        {
+            if(height[lp] < height[rp])
+            {
+                lp ++;
+                leftMax = Math.Max(leftMax, height[lp]);
+                volume += leftMax - height[lp];
+            }
+            else
+            {
+                rp --;
+                rightMax = Math.Max(rightMax, height[rp]);
+                volume += rightMax - height[rp];
+            }
+        }
+        return volume;
+    }
+}
+```
+
+## [13. 罗马数字转整数](https://leetcode.cn/problems/roman-to-integer/)
+
+罗马数字包含以下七种字符: `I`， `V`， `X`， `L`，`C`，`D` 和 `M`。
+
+```
+字符          数值
+I             1
+V             5
+X             10
+L             50
+C             100
+D             500
+M             1000
+```
+
+例如， 罗马数字 `2` 写做 `II` ，即为两个并列的 1 。`12` 写做 `XII` ，即为 `X` + `II` 。 `27` 写做 `XXVII`, 即为 `XX` + `V` + `II` 。
+
+通常情况下，罗马数字中小的数字在大的数字的右边。但也存在特例，例如 4 不写做 `IIII`，而是 `IV`。数字 1 在数字 5 的左边，所表示的数等于大数 5 减小数 1 得到的数值 4 。同样地，数字 9 表示为 `IX`。这个特殊的规则只适用于以下六种情况：
+
+- `I` 可以放在 `V` (5) 和 `X` (10) 的左边，来表示 4 和 9。
+- `X` 可以放在 `L` (50) 和 `C` (100) 的左边，来表示 40 和 90。 
+- `C` 可以放在 `D` (500) 和 `M` (1000) 的左边，来表示 400 和 900。
+
+给定一个罗马数字，将其转换成整数。
+
+> **思路：通常情况下，罗马数字中小的数字在右边；需要表示4或9时才出现小的数字在左边的情况；可以遍历除最后一个数字之外的所有数字，如果当前数字比下一个小就减去，否则就加上。**
+
+```c#
+public class Solution {
+    public int RomanToInt(string s) {
+        int total= 0;
+        int n = s.Length;
+
+        for(int i=0; i<n-1; i++) {
+            int curNumber = GetNumber(s[i]);
+            int nextNumber = GetNumber(s[i+1]);
+            if (curNumber <nextNumber) {
+                total -= curNumber;
+            } else {
+                total += curNumber;
+            }
+        }
+        total += GetNumber(s[n-1]);
+        return total;
+    }
+
+    public int GetNumber(char s) {
+        switch(s)
+        {
+            case 'I':
+                return 1;
+            case 'V':
+                return 5;
+            case 'X':
+                return 10;
+            case 'L':
+                return 50;
+            case 'C':
+                return 100;
+            case 'D':
+                return 500;
+            case 'M':
+                return 1000;
+            default:
+                return 0;
+        }
+    }
+}
+```
+
+## [12. 整数转罗马数字](https://leetcode.cn/problems/integer-to-roman/)
+
+七个不同的符号代表罗马数字，其值如下：
+
+| 符号 | 值   |
+| ---- | ---- |
+| I    | 1    |
+| V    | 5    |
+| X    | 10   |
+| L    | 50   |
+| C    | 100  |
+| D    | 500  |
+| M    | 1000 |
+
+罗马数字是通过添加从最高到最低的小数位值的转换而形成的。将小数位值转换为罗马数字有以下规则：
+
+- 如果该值不是以 4 或 9 开头，请选择可以从输入中减去的最大值的符号，将该符号附加到结果，减去其值，然后将其余部分转换为罗马数字。
+- 如果该值以 4 或 9 开头，使用 **减法形式**，表示从以下符号中减去一个符号，例如 4 是 5 (`V`) 减 1 (`I`): `IV` ，9 是 10 (`X`) 减 1 (`I`)：`IX`。仅使用以下减法形式：4 (`IV`)，9 (`IX`)，40 (`XL`)，90 (`XC`)，400 (`CD`) 和 900 (`CM`)。
+- 只有 10 的次方（`I`, `X`, `C`, `M`）最多可以连续附加 3 次以代表 10 的倍数。你不能多次附加 5 (`V`)，50 (`L`) 或 500 (`D`)。如果需要将符号附加4次，请使用 **减法形式**。
+
+给定一个整数，将其转换为罗马数字。
+
+> **思路：罗列出所有的特征数和对应的特征字母，从大到小遍历特征数，用循环递减法，依次拼接字符串。**
+
+```c#
+public class Solution {
+    public string IntToRoman(int num) {
+        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        string[] symbols = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+
+        StringBuilder res = new StringBuilder();
+        for(int i=0; i<values.Length; i++)
+        {
+            while(num >= values[i])
+            {
+                num -= values[i];
+                res.Append(symbols[i]);
+            }
+        }
+
+        return res.ToString();
+    }
+}
+```
+
+## [58. 最后一个单词的长度](https://leetcode.cn/problems/length-of-last-word/)
+
+给你一个字符串 `s`，由若干单词组成，单词前后用一些空格字符隔开。返回字符串中 **最后一个** 单词的长度。
+
+**单词** 是指仅由字母组成、不包含任何空格字符的最大子字符串。
+
+**示例 1：**
+
+```
+输入：s = "Hello World"
+输出：5
+解释：最后一个单词是“World”，长度为 5。
+```
+
+**示例 2：**
+
+```
+输入：s = "   fly me   to   the moon  "
+输出：4
+解释：最后一个单词是“moon”，长度为 4。
+```
+
+**示例 3：**
+
+```
+输入：s = "luffy is still joyboy"
+输出：6
+解释：最后一个单词是长度为 6 的“joyboy”。
+```
+
+> **思路：反向遍历。**
+
+```c#
+public class Solution {
+    public int LengthOfLastWord(string s) {
+        /** 不使用Trim和Split */
+        int length = s.Length;
+        int count = 0;
+        // 最后一个非空格字符的位置
+        int pos = length - 1;
+
+        // 跳过末尾的空格
+        while(s[pos] == ' ' && pos>=0) {
+            pos--;
+        }
+
+        // 从最后一个非空格字符开始算
+        for(int i=pos; i>=0; i--) {
+            if(s[i] == ' ') {
+                break;
+            }
+            count ++;
+        }
+
+        return count;
+    }
+}
+```
+
