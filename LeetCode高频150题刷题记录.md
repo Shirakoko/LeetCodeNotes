@@ -1571,3 +1571,242 @@ public class Solution {
 }
 ```
 
+## [151. 反转字符串中的单词](https://leetcode.cn/problems/reverse-words-in-a-string/)
+
+给你一个字符串 `s` ，请你反转字符串中 **单词** 的顺序。
+
+**单词** 是由非空格字符组成的字符串。`s` 中使用至少一个空格将字符串中的 **单词** 分隔开。
+
+返回 **单词** 顺序颠倒且 **单词** 之间用单个空格连接的结果字符串。
+
+**注意：**输入字符串 `s`中可能会存在前导空格、尾随空格或者单词间的多个空格。返回的结果字符串中，单词间应当仅用单个空格分隔，且不包含任何额外的空格。
+
+**示例 1：**
+
+```
+输入：s = "the sky is blue"
+输出："blue is sky the"
+```
+
+**示例 2：**
+
+```
+输入：s = "  hello world  "
+输出："world hello"
+解释：反转后的字符串中不能存在前导空格和尾随空格。
+```
+
+**示例 3：**
+
+```Csharp
+输入：s = "a good   example"
+输出："example good a"
+解释：如果两个单词间有多余的空格，反转后的字符串需要将单词间的空格减少到仅有一个。
+```
+
+> **思路一：调库。**
+
+```C#
+public class Solution {
+    public string ReverseWords(string s) {
+        return string.Join(' ', s.Split(' ').Where(str => str != "").Reverse());
+    }
+}
+```
+
+> **思路二：1.移除首尾空格和中间的多余空格，使字符串变成标准的用空格分隔开的一些单词；2.反转整个字符串；3.以空格为分隔符，反转每个单词。**
+
+```csharp
+public class Solution {
+    public string ReverseWords(string s) {
+        /** 1.移除首尾空格和中间的多余空格 */
+        /** 2.反转整个字符串 */
+        /** 3.反转每个单词 */
+        StringBuilder res = TrimSpaces(s);
+        ReverseString(res, 0, res.Length - 1);
+        ReverseEachWord(res);
+
+        return res.ToString();
+    }
+    /** 辅助函数1.移除空格 */
+    public StringBuilder TrimSpaces(string s)
+    {
+        int left = 0; int right = s.Length - 1; // 左右指针
+        // 去掉开头的空格
+        while(left<=right && s[left] == ' ') {
+            left ++;
+        }
+
+        // 去掉末尾的空格
+        while(left <= right && s[right] == ' ') {
+            right --;
+        }
+
+        // 去掉中间的多余空格
+        // 遇到字符就加入StringBuilder，遇到空格就看StringBuilder中上一个字符是否是空格
+        StringBuilder res = new StringBuilder();
+        while(left <= right) {
+            char c = s[left];
+            if(c != ' ') {
+                res.Append(c);
+            } else if(res.Length > 0 && res[res.Length - 1] != ' ') {
+                res.Append(c);
+            }
+
+            left++;
+        }
+
+        return res;
+    }
+
+    /** 辅助函数2.指定索引反转字符串*/
+    public void ReverseString(StringBuilder str, int left, int right) {
+        while(left < right) {
+            char tmp = str[left];
+            str[left] = str[right];
+            str[right] = tmp;
+            left ++; right --;
+        }
+    }
+
+    /** 辅助函数3.给定一个标准的用空格分隔的单词串，反转每个单词*/
+    public void ReverseEachWord(StringBuilder str) {
+        int n = str.Length;
+        int start = 0; int end = 0; // 单词的开头和结尾指针
+
+        while(start < n) {
+            // 找到单词的末尾
+            while(end < n && str[end] != ' ') {
+                end++;
+            }
+
+            // 反转单词
+            ReverseString(str, start, end - 1);
+            // 更新start和end，寻找下一个单词
+            start = end + 1; end++;
+        }
+    }
+}
+```
+
+## [6. Z 字形变换](https://leetcode.cn/problems/zigzag-conversion/)
+
+将一个给定字符串 `s` 根据给定的行数 `numRows` ，以从上往下、从左到右进行 Z 字形排列。
+
+比如输入字符串为 `"PAYPALISHIRING"` 行数为 `3` 时，排列如下：
+
+```
+P   A   H   N
+A P L S I I G
+Y   I   R
+```
+
+之后，你的输出需要从左往右逐行读取，产生出一个新的字符串，比如：`"PAHNAPLSIIGYIR"`。
+
+请你实现这个将字符串进行指定行数变换的函数：
+
+```
+string convert(string s, int numRows);
+```
+
+**示例 1：**
+
+```
+输入：s = "PAYPALISHIRING", numRows = 3
+输出："PAHNAPLSIIGYIR"
+```
+
+**示例 2：**
+
+```
+输入：s = "PAYPALISHIRING", numRows = 4
+输出："PINALSIGYAHRPI"
+解释：
+P     I    N
+A   L S  I G
+Y A   H R
+P     I
+```
+
+**示例 3：**
+
+```
+输入：s = "A", numRows = 1
+输出："A"
+```
+
+> **思路一：1.声明一个长度为numRows的字符串数组，用numRows个字符串表示每一行的字符；2.用求余数的方法确定s中每个字符在输出字符串中的位置，拼接到对应的字符串数组中；3.把字符串数组拼接成最终输出的字符串。**
+
+```csharp
+public class Solution {
+    public string Convert(string s, int numRows) {
+        if(numRows == 1) {
+            return s;
+        }
+        
+        int length = s.Length;
+        int group = 2*numRows - 2; // 一组的个数
+        StringBuilder[] lines = new StringBuilder[numRows]; // 每一行的字符
+
+        for(int i=0; i<numRows; i++) {
+            lines[i] = new StringBuilder();
+        }
+
+        for(int i=0; i<length; i++) {
+            int remain = i % group; // 求余
+            if(remain <= numRows - 1) {
+                // 竖着的
+                lines[remain].Append(s[i]);
+            } else {
+                // 斜着的
+                lines[group - remain].Append(s[i]);
+            }
+        }
+
+        StringBuilder res = new StringBuilder();
+        for(int i=0; i<numRows; i++) {
+            res.Append(lines[i].ToString());
+        }
+        return res.ToString();
+    }
+}
+```
+
+> **思路二：Flag法，通过一个 方向标志（`flag`）来控制字符的分配方向（向下或向上），从而模拟 Z 字形排列的过程。**
+
+```CSharp
+public class Solution {
+    public string Convert(string s, int numRows) {
+        if(numRows == 1) {
+            return s;
+        }
+        
+        StringBuilder[] lines = new StringBuilder[numRows]; // 每一行的字符
+        for(int i=0; i<numRows; i++) {
+            lines[i] = new StringBuilder();
+        }
+
+        int currentRow = 0; // 当前行
+        bool goingDown = false; // 是否向下走的标识
+
+        foreach(char c in s) {
+            lines[currentRow].Append(c);
+
+            // 如果到达第一行或最后一行，改变方向
+            if(currentRow == 0 || currentRow == numRows - 1) {
+                goingDown = !goingDown;
+            }
+
+            // 根据是否向下走，更新currentRow
+            currentRow += goingDown ? 1 : -1;
+        }
+
+        StringBuilder res = new StringBuilder();
+        for(int i=0; i<numRows; i++) {
+            res.Append(lines[i].ToString());
+        }
+        return res.ToString();
+    }
+}
+```
+
