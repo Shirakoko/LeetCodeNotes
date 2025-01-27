@@ -1845,12 +1845,12 @@ public class Solution {
 
         if (hLength < nLength) return -1; // needle比haystack长，直接返回-1
 
-        int pH = 0; // haystack指针
+        int pH = 0; // hayStack指针
         int pN = 0; // needle指针
 
         while (pH < hLength && pN < nLength) {
             if (haystack[pH] != needle[pN]) {
-                pH = pH - pN + 1; // 回退到上一次匹配起点的下一个位置
+                pH = pH - pN + 1; // hayStack指针回退到上一次匹配起点的下一个位置
                 pN = 0; // needle指针归零
             } else {
                 pH++; pN++;// 匹配成功，指针一起移动
@@ -1932,6 +1932,159 @@ public class Solution {
         }
 
         return next;
+    }
+}
+```
+
+## [68. 文本左右对齐](https://leetcode.cn/problems/text-justification/)
+
+给定一个单词数组 `words` 和一个长度 `maxWidth` ，重新排版单词，使其成为每行恰好有 `maxWidth` 个字符，且左右两端对齐的文本。
+
+你应该使用 “**贪心算法**” 来放置给定的单词；也就是说，尽可能多地往每行中放置单词。必要时可用空格 `' '` 填充，使得每行恰好有 *maxWidth* 个字符。
+
+要求尽可能均匀分配单词间的空格数量。如果某一行单词间的空格不能均匀分配，则左侧放置的空格数要多于右侧的空格数。
+
+文本的最后一行应为左对齐，且单词之间不插入**额外的**空格。
+
+**注意:**
+
+- 单词是指由非空格字符组成的字符序列。
+- 每个单词的长度大于 0，小于等于 *maxWidth*。
+- 输入单词数组 `words` 至少包含一个单词。
+
+> **思路：贪心模拟**
+>
+> 1. **确定每行的单词范围：**
+>    - **使用 `left` 和 `right` 指针确定当前行可以容纳的单词范围。**
+>    - **通过累加单词长度和至少的空格数（`right - left`）来判断是否超出 `maxWidth`。**
+> 2. **处理最后一行：**
+>    - **如果 `right` 遍历到最后一个单词，将剩余单词左对齐，并在行末填充空格。**
+> 3. **处理单单词行：**
+>    - **如果当前行只有一个单词，直接左对齐并在行末填充空格。**
+> 4. **处理多单词行：**
+>    - **计算平均空格数 `avgSpaces` 和多余的空格数 `extraSpaces`。**
+>    - **使用 `Join` 函数拼接单词，并根据 `extraSpaces` 分配多余的空格。**
+
+```c#
+public class Solution {
+    public IList<string> FullJustify(string[] words, int maxWidth) {
+        IList<string> res = new List<string>();
+        int right = 0; // 当前行的最后一个单词在words中的索引
+        int n = words.Length; // 单词总个数
+
+        while (true) {
+            int left = right; // 当前行的第一个单词在words中的索引
+            int sumLen = 0; // 当前行不含空格的单词长度
+
+            // 确定当前行可以放多少个单词
+            while (right < n && sumLen + words[right].Length + (right - left) <= maxWidth) {
+                sumLen += words[right].Length;
+                right++;
+            }
+
+            // 如果已经遍历完所有单词，返回结果
+            if (right == n) {
+                string lastLine = string.Join(" ", words, left, right - left);
+                lastLine = lastLine.PadRight(maxWidth); // 在行末填充空格
+                res.Add(lastLine);
+                return res;
+            }
+
+            int numWords = right - left;
+            int numSpaces = maxWidth - sumLen;
+
+            // 当前行只有一个单词，左对齐并在行末填充空格
+            if (numWords == 1) {
+                string line = words[left].PadRight(maxWidth);
+                res.Add(line);
+                continue;
+            }
+
+            // 当前行有多个单词
+            int avgSpaces = numSpaces / (numWords - 1); // 每个单词之间的平均空格数
+            int extraSpaces = numSpaces % (numWords - 1); // 多余的空格数
+
+            StringBuilder lineBuilder = new StringBuilder();
+            for (int i = left; i < right; i++) {
+                lineBuilder.Append(words[i]);
+
+                // 如果不是最后一个单词，根据i是否属于前extraSpaces个单词决定添加的空格个数
+                if (i < right - 1) {
+                    int spaces = avgSpaces + (i < left + extraSpaces ? 1 : 0);
+                    lineBuilder.Append(new string(' ', spaces));
+                }
+            }
+
+            res.Add(lineBuilder.ToString());
+        }
+    }
+}
+```
+
+## [125. 验证回文串](https://leetcode.cn/problems/valid-palindrome/)
+
+如果在将所有大写字符转换为小写字符、并移除所有非字母数字字符之后，短语正着读和反着读都一样。则可以认为该短语是一个 **回文串** 。
+
+字母和数字都属于字母数字字符。
+
+给你一个字符串 `s`，如果它是 **回文串** ，返回 `true` ；否则，返回 `false` 。
+
+> **思路一：双指针法**
+
+```C#
+public class Solution {
+    public bool IsPalindrome(string s) {
+        // 预处理字符串
+        StringBuilder sb = new StringBuilder();
+        foreach (char c in s) {
+            if (char.IsLetter(c)) {
+                // 如果是字母，就把小写字母加入预处理字符串
+                sb.Append(char.ToLower(c));
+            } else if (char.IsDigit(c)) {
+                // 如果是数字，就把数字加入预处理字符串
+                sb.Append(c);
+            }
+        }
+
+        // 判断预处理字符串是不是回文串
+        int left = 0; // 左指针
+        int right = sb.Length - 1; // 右指针
+        while (left < right) {
+            if (sb[left] != sb[right]) {
+                return false; // 如果字符不相等，返回 false
+            }
+            left++; // 左指针右移
+            right--; // 右指针左移
+        }
+
+        return true; // 如果所有字符都相等，返回 true
+    }
+}
+```
+
+> **思路二：反转字符串，判断反转后的字符串和原字符串是否相等**
+
+```c#
+public class Solution {
+    public bool IsPalindrome(string s) {
+        // 预处理字符串
+        StringBuilder sb = new StringBuilder();
+        foreach (char c in s) {
+            if (char.IsLetter(c)) {
+                // 如果是字母，就把小写字母加入预处理字符串
+                sb.Append(char.ToLower(c));
+            } else if (char.IsDigit(c)) {
+                // 如果是数字，就把数字加入预处理字符串
+                sb.Append(c);
+            }
+        }
+
+        // 将预处理后的字符串反转
+        string processed = sb.ToString();
+        string reversed = new string(processed.Reverse().ToArray());
+
+        // 判断反转后的字符串是否与原字符串相等
+        return processed == reversed;
     }
 }
 ```
