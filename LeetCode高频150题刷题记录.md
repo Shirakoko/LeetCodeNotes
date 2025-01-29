@@ -2064,7 +2064,7 @@ public class Solution {
 
 > **思路二：反转字符串，判断反转后的字符串和原字符串是否相等**
 
-```c#
+```
 public class Solution {
     public bool IsPalindrome(string s) {
         // 预处理字符串
@@ -2085,6 +2085,232 @@ public class Solution {
 
         // 判断反转后的字符串是否与原字符串相等
         return processed == reversed;
+    }
+}
+```
+
+## [392. 判断子序列](https://leetcode.cn/problems/is-subsequence/)
+
+给定字符串 **s** 和 **t** ，判断 **s** 是否为 **t** 的子序列。
+
+字符串的一个子序列是原始字符串删除一些（也可以不删除）字符而不改变剩余字符相对位置形成的新字符串。（例如，`"ace"`是`"abcde"`的一个子序列，而`"aec"`不是）。
+
+**示例 1：**
+
+```
+输入：s = "abc", t = "ahbgdc"
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：s = "axc", t = "ahbgdc"
+输出：false
+```
+
+> **思路一：双指针模拟法**
+
+```csharp
+public class Solution {
+    public bool IsSubsequence(string s, string t) {
+        int sLength = s.Length;
+        int tLength = t.Length;
+        if(sLength == 0) {
+            return true;
+        }
+        if(sLength > tLength) {
+            return false;
+        }
+
+        int sP = 0; // s的指针
+        int tP = 0; // t的指针
+        while(sP < sLength && tP < tLength) {
+            if(s[sP] == t[tP]) {
+                // 如果字符相同，两个指针一起移动
+                sP++; tP++;
+            } else {
+                // 如果不同，则只有t的指针移动
+                tP ++;
+            }
+
+            // 检查s的指针是否到末尾
+            if(sP == sLength) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+> **思路二：动态规划**
+>
+> 1. **定义状态：**
+>    - **`dp[i][j]` 表示 `s` 的前 `i` 个字符是否是 `t` 的前 `j` 个字符的子序列。**
+> 2. **状态转移方程：**
+>    - **如果 `s[i-1] == t[j-1]`，则 `dp[i][j] = dp[i-1][j-1]`。**
+>    - **如果 `s[i-1] != t[j-1]`，则 `dp[i][j] = dp[i][j-1]`。（即忽略 `t` 的第 `j` 个字符）**
+> 3. **初始化：**
+>    - **`dp[0][j] = True`，因为空字符串是任何字符串的子序列。**
+>    - **`dp[i][0] = False`（`i > 0`），因为非空字符串不可能是空字符串的子序列。**
+> 4. **最终结果：**
+>    - **`dp[len(s)][len(t)]` 即为所求。**
+
+```csharp
+public class Solution {
+    public bool IsSubsequence(string s, string t) {
+        int sLength = s.Length;
+        int tLength = t.Length;
+        
+        bool[,] dp = new bool[sLength+1, tLength+1];
+
+        // 空字符串是任何字符串的子序列
+        for(int i=0; i<=tLength; i++) {
+            dp[0, i] = true;
+        }
+
+        // 填充dp数组
+        for(int i=1; i<=sLength; i++) {
+            for(int j=1; j<=tLength; j++) {
+                if(s[i-1] == t[j-1]) {
+                    dp[i, j] = dp[i-1, j-1];
+                } else {
+                    dp[i, j] = dp[i, j-1];
+                }
+            }
+        }
+
+        return dp[sLength, tLength];
+    }
+}
+```
+
+## [167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
+
+给你一个下标从 **1** 开始的整数数组 `numbers` ，该数组已按 **非递减顺序排列** ，请你从数组中找出满足相加之和等于目标数 `target` 的两个数。如果设这两个数分别是 `numbers[index1]` 和 `numbers[index2]` ，则 `1 <= index1 < index2 <= numbers.length` 。
+
+以长度为 2 的整数数组 `[index1, index2]` 的形式返回这两个整数的下标 `index1` 和 `index2`。
+
+你可以假设每个输入 **只对应唯一的答案** ，而且你 **不可以** 重复使用相同的元素。
+
+你所设计的解决方案必须只使用常量级的额外空间。
+
+**示例 1：**
+
+```
+输入：numbers = [2,7,11,15], target = 9
+输出：[1,2]
+解释：2 与 7 之和等于目标数 9 。因此 index1 = 1, index2 = 2 。返回 [1, 2] 。
+```
+
+**示例 2：**
+
+```
+输入：numbers = [2,3,4], target = 6
+输出：[1,3]
+解释：2 与 4 之和等于目标数 6 。因此 index1 = 1, index2 = 3 。返回 [1, 3] 。
+```
+
+**示例 3：**
+
+```
+输入：numbers = [-1,0], target = -1
+输出：[1,2]
+解释：-1 与 0 之和等于目标数 -1 。因此 index1 = 1, index2 = 2 。返回 [1, 2] 。
+```
+
+> **思路一：两个for循环暴力匹配**
+
+```csharp
+public class Solution {
+    public int[] TwoSum(int[] numbers, int target) {
+        int n = numbers.Length;
+        int[] res = new int[2];
+        for(int i=0; i<n-1; i++) {
+            for(int j=i+1; j<n; j++) {
+                if(numbers[i] + numbers[j] == target) {
+                    res[0] = i+1; res[1] = j+1;
+                    return res;
+                }
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+> **思路二：区间分割**
+>
+> - **遍历数组，找到 `mid`，使得 `2 * numbers[mid] <= target`。**
+> - **这意味着 第一个数一定在`mid` 左边（含`mid`），第二个数一定在`mid`右边（含mid）。**
+> - **可以将搜索范围缩小到 `mid` 的左侧和右侧。**
+
+```csharp
+public class Solution {
+    public int[] TwoSum(int[] numbers, int target) {
+        int n = numbers.Length;
+        int mid = 0; // 区间分割点
+
+        // 找到 mid，使得 2 * numbers[mid] <= target
+        for (int i = 0; i < n; i++) {
+            if (2 * numbers[i] <= target) {
+                mid = i;
+            } else {
+                break;
+            }
+        }
+
+        int left = mid; // 左指针从 mid 开始
+        int right = mid; // 右指针从 mid 开始
+        int[] res = new int[2]; // 结果数组
+
+        // 双指针搜索
+        while (left >= 0 && right <= n - 1) {
+            int sum = numbers[left] + numbers[right];
+            if (sum < target) {
+                right++; // 和太小，右指针右移
+            } else if (sum > target) {
+                left--; // 和太大，左指针左移
+            } else {
+                if (left != right) {
+                    // 找到答案，返回下标（从 1 开始）
+                    res[0] = left + 1; res[1] = right + 1;
+                    return res;
+                } else {
+                    left--; // 避免使用同一个元素
+                }
+            }
+        }
+
+        return res; // 如果没有找到，返回空数组
+    }
+}
+```
+
+> **思路三：O(n)时间复杂度的双指针，本质是缩减搜索空间，将数组平铺展开成二维，发现搜索空间是一个倒三角，每次排除一行或一列，最多经过 *n* 步以后，就能排除所有的搜索空间。**
+
+```csharp
+public class Solution {
+    public int[] TwoSum(int[] numbers, int target) {
+        /** 双指针法 */
+        int left = 0; int right = numbers.Length - 1;
+        int[] res = new int[2];
+        while(left < right) {
+            int sum = numbers[left] + numbers[right];
+            if(sum < target) {
+                left ++;
+            } else if(sum > target) {
+                right --;
+            } else {
+                res[0] = left + 1; res[1] = right + 1;
+                return res;
+            }
+        }
+
+        return res;
     }
 }
 ```
