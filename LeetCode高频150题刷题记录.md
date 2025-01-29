@@ -2315,3 +2315,144 @@ public class Solution {
 }
 ```
 
+## [11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/)
+
+给定一个长度为 `n` 的整数数组 `height` 。有 `n` 条垂线，第 `i` 条线的两个端点是 `(i, 0)` 和 `(i, height[i])` 。
+
+找出其中的两条线，使得它们与 `x` 轴共同构成的容器可以容纳最多的水。
+
+返回容器可以储存的最大水量。
+
+**说明：**你不能倾斜容器。
+
+**示例 1：**
+
+```
+输入：[1,8,6,2,5,4,8,3,7]
+输出：49 
+```
+
+**示例 2：**
+
+```
+输入：height = [1,1]
+输出：1
+```
+
+> **思路：经典双指针，每次移动短板的指针，因为left++和right--都是为了尝试取到更多的水，如果短板不动的话，取到的水永远不会比上次多。**
+
+```csharp
+public class Solution {
+    public int MaxArea(int[] height) {
+        int lp = 0; // 左指针
+        int rp = height.Length - 1; // 右指针
+        int maxVolume = 0;
+
+        while(lp < rp) {
+            // 计算当前容积
+            int curVolume = Math.Min(height[lp], height[rp]) * (rp - lp);
+            // 更新容积
+            maxVolume = Math.Max(maxVolume, curVolume);
+            // 因为高度受限于数字较小的指针，因此需要移动数字较小的指针
+            if(height[lp] < height[rp]) {
+                lp ++;
+            } else {
+                rp --;
+            }
+        }
+
+        return maxVolume;
+    }
+}
+```
+
+## [15. 三数之和](https://leetcode.cn/problems/3sum/)
+
+给你一个整数数组 `nums` ，判断是否存在三元组 `[nums[i], nums[j], nums[k]]` 满足 `i != j`、`i != k` 且 `j != k` ，同时还满足 `nums[i] + nums[j] + nums[k] == 0` 。请你返回所有和为 `0` 且不重复的三元组。
+
+**注意：**答案中不可以包含重复的三元组。
+
+**示例 1：**
+
+```
+输入：nums = [-1,0,1,2,-1,-4]
+输出：[[-1,-1,2],[-1,0,1]]
+解释：
+nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0 。
+nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0 。
+nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0 。
+不同的三元组是 [-1,0,1] 和 [-1,-1,2] 。
+注意，输出的顺序和三元组的顺序并不重要。
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1,1]
+输出：[]
+解释：唯一可能的三元组和不为 0 。
+```
+
+**示例 3：**
+
+```
+输入：nums = [0,0,0]
+输出：[[0,0,0]]
+解释：唯一可能的三元组和为 0 。
+```
+
+思路：先排序，后用双指针
+
+- 外层循环的`i`确定三数中的第一个数，需要去除重复
+
+- 左指针`lp`和右指针`rp`在`i`的右侧寻找，在找到符合条件的三元组后也需要去除重复
+
+```csharp
+public class Solution {
+    public IList<IList<int>> ThreeSum(int[] nums) {
+        Array.Sort(nums); // 先对数组进行排序
+        int n = nums.Length;
+        int lp = 0; // 左指针
+        int rp = nums.Length - 1; // 右指针
+        IList<IList<int>> res = new List<IList<int>>(); // 结果
+
+        // i是三数中的第一个数的索引，剩下两个数的索引是lp和rp，在i的右侧找到
+        for(int i=0; i<n-2; i++) {
+            if(nums[i] > 0) {
+                // 有序数组，最小的数都大于0了，三数之和肯定大于0，直接退出
+                break;
+            }
+            if(i > 0 && nums[i] == nums[i-1]) {
+                // 如果当前元素和前一个元素相同，说明已经处理过这个值
+                continue;
+            }
+            lp = i + 1; rp = n - 1;
+            while(lp < rp) {
+                int sum = nums[i] + nums[lp] + nums[rp];
+                if(sum > 0) {
+                    // 和过大了，右指针递减
+                    rp --;
+                } else if(sum < 0) {
+                    // 和过小了，左指针递增
+                    lp ++;
+
+                } else {
+                    // 和刚好为0，加入结果
+                    res.Add(new List<int>{nums[i], nums[lp], nums[rp]});
+                    // 跳过重复的元素
+                    while(lp < rp && nums[lp] == nums[lp + 1]) {
+                        lp ++;
+                    }
+                    while(lp < rp && nums[rp] == nums[rp - 1]) {
+                        rp --;
+                    }
+                    lp ++; rp --;
+                }
+            }
+        }
+
+        return res;
+    }
+}
+```
+
