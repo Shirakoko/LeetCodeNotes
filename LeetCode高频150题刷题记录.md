@@ -2456,3 +2456,120 @@ public class Solution {
 }
 ```
 
+## [209. 长度最小的子数组](https://leetcode.cn/problems/minimum-size-subarray-sum/)
+
+给定一个含有 `n` 个正整数的数组和一个正整数 `target` **。**
+
+找出该数组中满足其总和大于等于 `target` 的长度最小的 **子数组**`[numsl, numsl+1, ..., numsr-1, numsr]` ，并返回其长度**。**如果不存在符合条件的子数组，返回 `0` 。
+
+**示例 1：**
+
+```
+输入：target = 7, nums = [2,3,1,2,4,3]
+输出：2
+解释：子数组 [4,3] 是该条件下的长度最小的子数组。
+```
+
+**示例 2：**
+
+```
+输入：target = 4, nums = [1,4,4]
+输出：1
+```
+
+**示例 3：**
+
+```
+输入：target = 11, nums = [1,1,1,1,1,1,1,1]
+输出：0
+```
+
+> **思路：滑动窗口**
+>
+> 1. **滑动窗口：用两个指针 `lp`（左）和 `rp`（右）表示窗口的左右边界。**
+> 2. **窗口扩展：`rp` 向右移动，累加元素到 `sum`。**
+> 3. **窗口收缩：当 `sum >= target` 时，记录窗口长度 `rp - lp + 1`，并尝试收缩窗口（移动 `lp` 向右）。**
+> 4. **更新最小长度：每次满足条件时，更新最小长度 `minLen`。**
+> 5. **返回结果：若找到满足条件的子数组，返回 `minLen`；否则返回 0。**
+
+```csharp
+public class Solution {
+    public int MinSubArrayLen(int target, int[] nums) {
+        int lp = 0; int rp = 0; // 滑动窗口的左右指针
+        int n = nums.Length;
+        int sum = 0;
+        int minLen = int.MaxValue;
+
+        while(rp < n) {
+            sum += nums[rp]; // 扩展窗口
+            while(sum >= target && lp <= rp) {
+                minLen = Math.Min(minLen, rp - lp + 1); // 更新最小长度
+                sum -= nums[lp]; // 收缩窗口
+                lp++;
+            }
+            rp++;
+        }
+
+        return minLen == int.MaxValue ? 0 : minLen;
+    }
+}
+```
+
+## [3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+
+给定一个字符串 `s` ，请你找出其中不含有重复字符的 **最长 子串** 的长度。
+
+**示例 1:**
+
+```
+输入: s = "abcabcbb"
+输出: 3 
+解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。
+```
+
+**示例 2:**
+
+```
+输入: s = "bbbbb"
+输出: 1
+解释: 因为无重复字符的最长子串是 "b"，所以其长度为 1。
+```
+
+**示例 3:**
+
+```
+输入: s = "pwwkew"
+输出: 3
+解释: 因为无重复字符的最长子串是 "wke"，所以其长度为 3。
+     请注意，你的答案必须是 子串 的长度，"pwke" 是一个子序列，不是子串。
+```
+
+> **思路：**
+>
+> 1. **滑动窗口：用两个指针 `lp`（左）和 `rp`（右）表示窗口的左右边界。**
+> 2. **哈希集合：用 `HashSet` 存储当前窗口中的字符，确保字符唯一。**
+> 3. **窗口扩展：`rp` 向右移动，尝试将字符加入集合。**
+> 4. **窗口收缩：如果当前字符已存在于集合中，移动 `lp` 向右，并从集合中移除字符，直到当前字符可以加入集合。**
+> 5. **更新最大长度：每次窗口扩展后，计算当前窗口长度 `rp - lp`，并更新 `maxLen`。**
+
+```csharp
+public class Solution {
+    public int LengthOfLongestSubstring(string s) {
+        int lp = 0, rp = 0, maxLen = 0; // 左右指针和最大长度
+        HashSet<char> set = new HashSet<char>(); // 存储当前窗口的字符
+
+        while (rp < s.Length) {
+            while (set.Contains(s[rp])) { // 如果字符重复，收缩窗口
+                set.Remove(s[lp]);
+                lp++;
+            }
+            set.Add(s[rp]); // 扩展窗口
+            rp++;
+            maxLen = Math.Max(maxLen, rp - lp); // 更新最大长度
+        }
+
+        return maxLen;
+    }
+}
+```
+
