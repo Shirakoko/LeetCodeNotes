@@ -2573,3 +2573,130 @@ public class Solution {
 }
 ```
 
+## [30. 串联所有单词的子串](https://leetcode.cn/problems/substring-with-concatenation-of-all-words/)
+
+给定一个字符串 `s` 和一个字符串数组 `words`**。** `words` 中所有字符串 **长度相同**。
+
+ `s` 中的 **串联子串** 是指一个包含 `words` 中所有字符串以任意顺序排列连接起来的子串。
+
+- 例如，如果 `words = ["ab","cd","ef"]`， 那么 `"abcdef"`， `"abefcd"`，`"cdabef"`， `"cdefab"`，`"efabcd"`， 和 `"efcdab"` 都是串联子串。 `"acdbef"` 不是串联子串，因为他不是任何 `words` 排列的连接。
+
+返回所有串联子串在 `s` 中的开始索引。你可以以 **任意顺序** 返回答案。
+
+**示例 1：**
+
+```
+输入：s = "barfoothefoobarman", words = ["foo","bar"]
+输出：[0,9]
+解释：因为 words.length == 2 同时 words[i].length == 3，连接的子字符串的长度必须为 6。
+子串 "barfoo" 开始位置是 0。它是 words 中以 ["bar","foo"] 顺序排列的连接。
+子串 "foobar" 开始位置是 9。它是 words 中以 ["foo","bar"] 顺序排列的连接。
+输出顺序无关紧要。返回 [9,0] 也是可以的。
+```
+
+**示例 2：**
+
+```
+输入：s = "wordgoodgoodgoodbestword", words = ["word","good","best","word"]
+输出：[]
+解释：因为 words.length == 4 并且 words[i].length == 4，所以串联子串的长度必须为 16。
+s 中没有子串长度为 16 并且等于 words 的任何顺序排列的连接。
+所以我们返回一个空数组。
+```
+
+**示例 3：**
+
+```
+输入：s = "barfoofoobarthefoobarman", words = ["bar","foo","the"]
+输出：[6,9,12]
+解释：因为 words.length == 3 并且 words[i].length == 3，所以串联子串的长度必须为 9。
+子串 "foobarthe" 开始位置是 6。它是 words 中以 ["foo","bar","the"] 顺序排列的连接。
+子串 "barthefoo" 开始位置是 9。它是 words 中以 ["bar","the","foo"] 顺序排列的连接。
+子串 "thefoobar" 开始位置是 12。它是 words 中以 ["the","foo","bar"] 顺序排列的连接。
+```
+
+> **思路：滑动窗口，使用滑动窗口在`s`中寻找长度为`totalLen`的子串，对于每个窗口，检查是否包含words中所有的单词，且出现个数是否对得上；因此需要预先用哈希表`wordCounts`记录`words`中每个单词的出现次数；对于每个窗口用另一个哈希表`curCounts`记录窗口中各单词的出现次数，并与`wordCounts`比较。**
+>
+> 1. **外层循环:**
+>    - **外层循环从 `0` 到 `wordLen - 1`，确保滑动窗口覆盖所有可能的起始位置。**
+>    - **例如，如果 `wordLen = 3`，外层循环会分别从 `0`、`1`、`2` 开始滑动窗口：**
+>      - **从 `0` 开始：检查子串 `0, 3, 6, ...`**
+>      - **从 `1` 开始：检查子串 `1, 4, 7, ...`**
+>      - **从 `2` 开始：检查子串 `2, 5, 8, ...`**
+> 2. **滑动窗口:**
+>    - **内层循环移动右指针，逐步扩大窗口。**
+>    - **如果当前单词在 `words` 中，更新当前窗口的单词统计。**
+>    - **如果当前单词出现次数超过 `words` 中的次数，移动左指针缩小窗口。**
+> 3. **记录结果:**
+>    - **如果当前窗口包含 `words` 中的所有单词，记录起始索引。**
+> 4. **重置窗口:**
+>    - **如果当前单词不在 `words` 中，重置窗口。**
+
+```csharp
+public class Solution {
+    public IList<int> FindSubstring(string s, string[] words) {
+        List<int> result = new List<int>();
+
+        int wordLen = words[0].Length; // 每个单词的长度
+        int totalLen = wordLen * words.Length; // 目标子串的总长度
+        Dictionary<string, int> wordCounts = new Dictionary<string, int>();
+
+        // 统计 words 中每个单词的出现次数
+        foreach (var word in words) {
+            if (wordCounts.ContainsKey(word)) {
+                wordCounts[word]++;
+            } else {
+                wordCounts[word] = 1;
+            }
+        }
+
+        // 遍历所有起始位置的偏移
+        for(int i=0; i<wordLen; i++) {
+            int left = i;
+            Dictionary<string, int> curCounts = new Dictionary<string, int>();
+            int count = 0; // 匹配的单词个数
+
+            for(int right = i; right <= s.Length - wordLen; right += wordLen) {
+                string word = s.Substring(right, wordLen); // 取一个单词
+
+                if(wordCounts.ContainsKey(word)) {
+                    // 如果字典中有该单词，更新当前窗口的单词统计
+                    if(curCounts.ContainsKey(word)) {
+                        curCounts[word] ++;
+                    } else {
+                        curCounts[word] = 1;
+                    }
+
+                    // 匹配的单词个数增加
+                    count ++;
+                    // 如果当前单词出现次数超过 words 中的次数，移动左指针
+                    while(curCounts[word] > wordCounts[word]) {
+                        string leftWord = s.Substring(left, wordLen);
+                        curCounts[leftWord] --;
+                        count --;
+                        left += wordLen;
+                    }
+
+                    // 检查匹配的单词个数是否与words中的单词个数相同
+                    if(count == words.Length) {
+                        result.Add(left);
+                        string leftWord = s.Substring(left, wordLen);
+                        curCounts[leftWord] --;
+                        count --;
+                        left += wordLen;
+                    }
+
+                } else {
+                    // 如果字典中没有该单词，重置窗口
+                    curCounts.Clear();
+                    count = 0;
+                    left = right + wordLen; // 左指针移到下一个可能的子串起始处
+                }
+            }
+        }
+        
+        return result;
+    }
+}
+```
+
