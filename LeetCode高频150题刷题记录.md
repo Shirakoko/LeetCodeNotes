@@ -2700,3 +2700,521 @@ public class Solution {
 }
 ```
 
+## [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
+
+给你一个字符串 `s` 、一个字符串 `t` 。返回 `s` 中涵盖 `t` 所有字符的最小子串。如果 `s` 中不存在涵盖 `t` 所有字符的子串，则返回空字符串 `""` 。
+
+**注意：**
+
+- 对于 `t` 中重复字符，我们寻找的子字符串中该字符数量必须不少于 `t` 中该字符数量。
+- 如果 `s` 中存在这样的子串，我们保证它是唯一的答案。 
+
+**示例 1：**
+
+```
+输入：s = "ADOBECODEBANC", t = "ABC"
+输出："BANC"
+解释：最小覆盖子串 "BANC" 包含来自字符串 t 的 'A'、'B' 和 'C'。
+```
+
+**示例 2：**
+
+```
+输入：s = "a", t = "a"
+输出："a"
+解释：整个字符串 s 是最小覆盖子串。
+```
+
+**示例 3:**
+
+```
+输入: s = "a", t = "aa"
+输出: ""
+解释: t 中两个字符 'a' 均应包含在 s 的子串中，
+因此没有符合条件的子字符串，返回空字符串。
+```
+
+> **思路：滑动窗口**
+>
+> 1. **统计字符频率：**
+>    - **首先统计字符串 `t` 中每个字符的出现次数，存储在字典 `tCountDict` 中。**
+> 2. **初始化滑动窗口：**
+>    - **使用两个指针 `left` 和 `right` 来表示滑动窗口的左右边界。**
+>    - **使用字典 `countDict` 来记录当前窗口中每个字符的出现次数。**
+>    - **使用变量 `count` 来记录当前窗口中已经匹配了 `t` 中字符的个数。**
+> 3. **扩展窗口：**
+>    - **移动右指针 `right`，将字符加入窗口，并更新 `countDict` 和 `count`。**
+>    - **如果当前字符是 `t` 中的字符，并且 `countDict` 中该字符的个数等于 `tCountDict` 中的个数，说明该字符已经匹配完成，`count` 加 1。**
+> 4. **收缩窗口：**
+>    - **当 `count` 等于 `tCountDict` 的大小时，说明当前窗口已经包含了 `t` 中的所有字符。**
+>    - **此时尝试移动左指针 `left`，缩小窗口，同时更新 `countDict` 和 `count`。**
+>    - **如果缩小窗口后，某个字符的个数不再满足 `tCountDict` 中的要求，则 `count` 减 1。**
+> 5. **更新最小窗口：**
+>    - **在每次找到满足条件的窗口时，更新最小窗口的长度和起始位置。**
+
+```csharp
+public class Solution {
+    public string MinWindow(string s, string t) {
+        int sLen = s.Length; 
+        int tLen = t.Length;
+        if (sLen < tLen) {
+            return "";
+        }
+
+        // 统计字符串 t 中每个字符的出现次数
+        Dictionary<char, int> tCountDict = new Dictionary<char, int>();
+        foreach (char c in t) {
+            if (tCountDict.ContainsKey(c)) {
+                tCountDict[c]++;
+            } else {
+                tCountDict[c] = 1;
+            }
+        }
+
+        int left = 0; // 滑动窗口的左指针
+        int right = 0; // 滑动窗口的右指针
+        int count = 0; // 匹配的字符个数
+        int minLen = int.MaxValue; // 最小窗口长度
+        int minStart = 0; // 最小窗口的起始位置
+        Dictionary<char, int> countDict = new Dictionary<char, int>(); // 当前窗口中字符的统计
+
+        while (right < sLen) {
+            char curChar = s[right];
+            if (tCountDict.ContainsKey(curChar)) {
+                // 更新当前窗口中字符的统计
+                if (countDict.ContainsKey(curChar)) {
+                    countDict[curChar]++;
+                } else {
+                    countDict[curChar] = 1;
+                }
+
+                // 如果当前字符的个数满足 t 中的要求，增加匹配的字符个数
+                if (countDict[curChar] == tCountDict[curChar]) {
+                    count++;
+                }
+            }
+
+            // 当窗口满足条件时，尝试收缩左侧
+            while (count == tCountDict.Count) {
+                // 更新最小窗口
+                if (right - left + 1 < minLen) {
+                    minLen = right - left + 1;
+                    minStart = left;
+                }
+
+                char leftChar = s[left];
+                if (tCountDict.ContainsKey(leftChar)) {
+                    countDict[leftChar]--;
+                    // 如果窗口中某字符的个数不再满足要求，减少匹配的字符个数
+                    if (countDict[leftChar] < tCountDict[leftChar]) {
+                        count--;
+                    }
+                }
+                left++;
+            }
+            right++;
+        }
+
+        // 返回最小窗口对应的子串
+        return minLen == int.MaxValue ? "" : s.Substring(minStart, minLen);
+    }
+}
+```
+
+## [36. 有效的数独](https://leetcode.cn/problems/valid-sudoku/)
+
+请你判断一个 `9 x 9` 的数独是否有效。只需要 **根据以下规则** ，验证已经填入的数字是否有效即可。
+
+1. 数字 `1-9` 在每一行只能出现一次。
+2. 数字 `1-9` 在每一列只能出现一次。
+3. 数字 `1-9` 在每一个以粗实线分隔的 `3x3` 宫内只能出现一次。
+
+**注意：**
+
+- 一个有效的数独（部分已被填充）不一定是可解的。
+- 只需要根据以上规则，验证已经填入的数字是否有效即可。
+- 空白格用 `'.'` 表示。
+
+**示例 1：**
+
+```
+输入：board = 
+[["5","3",".",".","7",".",".",".","."]
+,["6",".",".","1","9","5",".",".","."]
+,[".","9","8",".",".",".",".","6","."]
+,["8",".",".",".","6",".",".",".","3"]
+,["4",".",".","8",".","3",".",".","1"]
+,["7",".",".",".","2",".",".",".","6"]
+,[".","6",".",".",".",".","2","8","."]
+,[".",".",".","4","1","9",".",".","5"]
+,[".",".",".",".","8",".",".","7","9"]]
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：board = 
+[["8","3",".",".","7",".",".",".","."]
+,["6",".",".","1","9","5",".",".","."]
+,[".","9","8",".",".",".",".","6","."]
+,["8",".",".",".","6",".",".",".","3"]
+,["4",".",".","8",".","3",".",".","1"]
+,["7",".",".",".","2",".",".",".","6"]
+,[".","6",".",".",".",".","2","8","."]
+,[".",".",".","4","1","9",".",".","5"]
+,[".",".",".",".","8",".",".","7","9"]]
+输出：false
+解释：除了第一行的第一个数字从 5 改为 8 以外，空格内其他数字均与 示例1 相同。 但由于位于左上角的 3x3 宫内有两个 8 存在, 因此这个数独是无效的。
+```
+
+> **思路一：遍历9行，遍历9列，遍历9个九宫格，分别检查重复。**
+
+```csharp
+public class Solution {
+    public bool IsValidSudoku(char[][] board) {
+        // 检查行是否重复
+        for(int i=0; i<9; i++) {
+            char[] row = board[i]; // 该行的元素组成的字符数组
+            if(CheckDuplicate(row)) {
+                return false;
+            }
+        }
+
+        // 检查列是否重复
+        for(int i=0; i<9; i++) {
+            char[] col = GetCol(i, board);
+            if(CheckDuplicate(col)) {
+                return false;
+            }
+        }
+
+        // 检查九宫格是否重复
+        for(int i=0; i<9; i++) {
+            char[] subBoard = GetSubBoard(i, board);
+            if(CheckDuplicate(subBoard)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    /** 辅助函数：得到某一列组成的字符串数组 */
+    public char[] GetCol(int col, char[][] board) {
+        char[] res = new char[9];
+        for(int row=0; row<9; row++) {
+            res[row] = board[row][col];
+        }
+
+        return res;
+    }
+
+    /** 辅助函数：得到第n个九宫格 */
+    public char[] GetSubBoard(int n, char[][] board) {
+        char[] res = new char[9];
+        int startRow = (n/3)*3;
+        int startCol = (n%3)*3;
+        int index = 0;
+        for(int row=startRow; row<startRow+3; row++) {
+            for(int col=startCol; col<startCol+3; col++) {
+                res[index++] = board[row][col];
+            }
+        }
+
+        return res;
+    }
+
+    /** 辅助函数：检查某个字符数组是否含有重复元素 */
+    public bool CheckDuplicate(char[] target) {
+        HashSet<char> set = new HashSet<char>();
+        for(int i=0; i<9; i++) {
+            char c = target[i];
+            if(c != '.') {
+                if(set.Contains(c)) {
+                    // 找到重复元素，直接返回true
+                    return true;
+                } else {
+                    set.Add(c);
+                }
+            }
+        }
+        return false;
+    }
+}
+```
+
+> **思路二：遍历每个元素，检查是否重复，并标记该数字在对应的行、列、九宫格内已存在。**
+
+```csharp
+public class Solution {
+    public bool IsValidSudoku(char[][] board) {
+        // 使用二维数组代替锯齿数组
+        bool[,] row = new bool[9, 9]; // 记录某行的某个数字是否已存在
+        bool[,] col = new bool[9, 9]; // 记录某列的某个数字是否已存在
+        bool[,] subBoard = new bool[9, 9]; // 记录第n个九宫格内某个数字是否已存在
+
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] == '.') {
+                    continue;
+                }
+
+                int value = board[i][j] - '1'; // 将字符转换为数字（0-8）
+                int boardId = (i / 3) * 3 + (j / 3); // 计算九宫格索引（0-8）
+
+                // 检查是否重复
+                if (row[i, value] || col[j, value] || subBoard[boardId, value]) {
+                    return false;
+                }
+
+                // 标记数字已存在
+                row[i, value] = true;
+                col[j, value] = true;
+                subBoard[boardId, value] = true;
+            }
+        }
+
+        return true;
+    }
+}
+```
+
+## [54. 螺旋矩阵](https://leetcode.cn/problems/spiral-matrix/)
+
+给你一个 `m` 行 `n` 列的矩阵 `matrix` ，请按照 **顺时针螺旋顺序** ，返回矩阵中的所有元素。
+
+**示例 1：**
+
+```
+输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+输出：[1,2,3,6,9,8,7,4,5]
+```
+
+**示例 2：**
+
+```
+输入：matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+输出：[1,2,3,4,8,12,11,10,9,5,6,7]
+```
+
+> **思路一：方向标记+动态更新边界。**
+
+```csharp
+public class Solution {
+    public IList<int> SpiralOrder(int[][] matrix) {
+        int m = matrix.Length; // 行数
+        int n = matrix[0].Length; // 列数
+
+        int dirFlag = 0; // 方向：0=右，1=下，2=左，3=上
+        int row = 0, col = 0; // 当前坐标
+        int rowCount = 0, colCount = 0; // 已遍历的行和列的层数
+        IList<int> res = new List<int>();
+
+        while (res.Count < m * n) {
+            res.Add(matrix[row][col]); // 将当前元素加入结果
+
+            if (dirFlag == 0) { // 向右
+                if (col == n - 1 - colCount / 2) {
+                    row++;      // 下移一行
+                    dirFlag = 1; 
+                    rowCount++; // 完成一“行层”
+                } else {
+                    col++;
+                }
+            } else if (dirFlag == 1) { // 向下
+                if (row == m - 1 - rowCount / 2) {
+                    col--;      // 左移一列
+                    dirFlag = 2; 
+                    colCount++; // 完成一“列层”
+                } else {
+                    row++;
+                }
+            } else if (dirFlag == 2) { // 向左
+                if (col == 0 + colCount / 2) {
+                    row--;      // 上移一行
+                    dirFlag = 3; 
+                    rowCount++; // 完成一“行层”
+                } else {
+                    col--;
+                }
+            } else if (dirFlag == 3) { // 向上
+                if (row == 0 + rowCount / 2) { // 关键修正点：上边界为已完成的“行层”+1
+                    col++;      // 右移一列
+                    dirFlag = 0; 
+                    colCount++; // 完成一“列层”
+                } else {
+                    row--;
+                }
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+> **思路二：四个指针转圈圈**
+>
+> - **从左到右，顶部一层遍历完往下移一位，top++；**
+> - **从上到下，遍历完右侧往左移一位，right--；**
+> - **从右到左，判断`top <= bottom`，即是否上下都走完了。遍历完底部上移，bottom--；**
+> - **从下到上，判断`left <= right`，遍历完左侧右移，left++；**
+> - **当矩阵只有一行或一列时，完成前两个方向的遍历（从左到右、从上到下）后，边界可能已经交叉。此时如果不加判断直接执行后续方向，会导致重复添加元素。**
+
+```csharp
+public class Solution {
+    public IList<int> SpiralOrder(int[][] matrix) {
+        int m = matrix.Length; // 行数
+        int n = matrix[0].Length; // 列数
+
+        int left = 0; int right = n - 1; // 左右边界
+        int top = 0; int bottom = m - 1; // 上下边界
+
+        // 储存结果的列表
+        IList<int> res = new List<int>();
+
+        while(left <= right && top <= bottom) {
+            // 从左到右
+            for(int i=left; i<=right; i++) {
+                res.Add(matrix[top][i]);
+            }
+            top ++; // 上边界下移一行
+            // 从上到下
+            for(int i=top; i<=bottom; i++) {
+                res.Add(matrix[i][right]);
+            }
+            right --; // 右边界左移一列
+
+            if(top <= bottom) {
+                // 从右到左
+                for(int i=right; i>=left; i--) {
+                    res.Add(matrix[bottom][i]);
+                }
+            }
+            bottom --; // 下边界上移一行
+            // 从下到上
+            if(left <= right) {
+                for(int i=bottom; i>=top; i--) {
+                    res.Add(matrix[i][left]);
+                }               
+            }
+            left ++; // 左边界右移一列
+        }
+
+        return res;
+    }
+}
+```
+
+## [48. 旋转图像](https://leetcode.cn/problems/rotate-image/)
+
+给定一个 *n* × *n* 的二维矩阵 `matrix` 表示一个图像。请你将图像顺时针旋转 90 度。
+
+你必须在**[ 原地](https://baike.baidu.com/item/原地算法)** 旋转图像，这意味着你需要直接修改输入的二维矩阵。**请不要** 使用另一个矩阵来旋转图像。
+
+**示例 1：**
+
+```
+输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+输出：[[7,4,1],[8,5,2],[9,6,3]]
+```
+
+**示例 2：**
+
+```
+输入：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+输出：[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+```
+
+>  **思路一：根据旋转矩阵寻找坐标规律，发现顺时针旋转90°后，新的坐标`(x', y')`**
+>
+> - **x' = y**
+> - **y' = n - 1 - x**
+
+```csharp
+public class Solution {
+    public void Rotate(int[][] matrix) {
+        int n = matrix.Length;
+        int[][] result = new int[n][];
+        // 初始化结果矩阵
+        for(int i=0; i<n; i++) {
+            result[i] = new int[n];
+        }
+        
+        // 建立坐标映射
+        for(int x=0; x<n; x++) {
+            for(int y=0; y<n; y++) {
+                result[x][y] = matrix[n-1-y][x]; // 关键映射
+            }
+        }
+        
+        // 复制回原矩阵
+        for(int x=0; x<n; x++) {
+            for(int y=0; y<n; y++) {
+                matrix[x][y] = result[x][y];
+            }
+        }
+    }
+}
+```
+
+**思路二：从外层到内层，每一层由四个数交换完成原地旋转。**
+
+```csharp
+public class Solution {
+    public void Rotate(int[][] matrix) {
+        int n = matrix.Length;
+
+        int center = n/2; // 中心坐标
+        int layer = 0; // 当前旋转的层数
+        while(layer <= center) {
+            for(int i=layer; i<(n-1)-layer; i++) {
+                ExchangeFourNums(n, layer, i, matrix);
+            }
+            layer ++;
+        }
+    }
+
+    /** 辅助函数，交换(row, col)对应的四个数 */
+    private void ExchangeFourNums(int n, int row, int col, int[][] matrix) {
+        // 保存左上角元素
+        int temp = matrix[row][col];
+        
+        // 左上<-左下
+        matrix[row][col] = matrix[n - 1 - col][row];
+        // 左下<-右下
+        matrix[n - 1 - col][row] = matrix[n - 1 - row][n - 1 - col];
+        // 右下<-右上
+        matrix[n - 1 - row][n - 1 - col] = matrix[col][n - 1 - row];
+        // 右上<-左上（使用保存的temp）
+        matrix[col][n - 1 - row] = temp;
+    }
+}
+```
+
+> **思路三：矩阵转置+水平反转每行。**
+
+```csharp
+public class Solution {
+    public void Rotate(int[][] matrix) {
+        int n = matrix.Length;
+
+        // 1.转置矩阵
+        for(int i=0; i<n; i++) {
+            for(int j=i; j<n; j++) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = temp;
+            }
+        }
+
+        // 2.水平翻转每行
+        for(int i=0; i<n; i++) {
+            Array.Reverse(matrix[i]);
+        }
+    }
+}
+```
+
