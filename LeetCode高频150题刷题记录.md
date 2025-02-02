@@ -1867,21 +1867,20 @@ public class Solution {
 > **思路二：KMP算法**
 >
 > - **构建部分匹配表（next 数组）：**
->
->   - **`next[j]` 表示子字符串 `needle` 的前 `j` 个字符中，最长相同前缀和后缀的长度。**
->
->   - **例如，子字符串 `"ababc"` 的 `next` 数组为 `[-1, 0, 0, 1, 2， 0]`。**
+>  - **`next[j]` 表示子字符串 `needle` 的前 `j` 个字符中，最长相同前缀和后缀的长度。**
+>   
+>  - **例如，子字符串 `"ababc"` 的 `next` 数组为 `[-1, 0, 0, 1, 2，0]`。**
 >   - **通过双指针 `i` 和 `j` 计算 `next` 数组：**
 >     - **如果 `p[i] == p[j]`，则 `next[j+1] = i+1`。**
 >     - **如果 `p[i] != p[j]`，则回退 `i` 到 `next[i]`，直到匹配或 `i = -1`。**
->
-> - **匹配过程：**
->
->   - **主字符串和子字符串从左到右逐个字符匹配。**
->
->   - **如果字符匹配，两个指针一起右移。**
->
->   - **如果字符不匹配，子字符串的指针根据 `next` 数组回退到某个位置，主字符串的指针不需要回退。**
+>   
+>- **匹配过程：**
+> 
+>  - **主字符串和子字符串从左到右逐个字符匹配。**
+> 
+>  - **如果字符匹配，两个指针一起右移。**
+> 
+>  - **如果字符不匹配，子字符串的指针根据 `next` 数组回退到某个位置，主字符串的指针不需要回退。**
 
 ```c#
 public class Solution {
@@ -3214,6 +3213,528 @@ public class Solution {
         for(int i=0; i<n; i++) {
             Array.Reverse(matrix[i]);
         }
+    }
+}
+```
+
+## [73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+给定一个 `m x n` 的矩阵，如果一个元素为 **0** ，则将其所在行和列的所有元素都设为 **0** 。请使用 **原地** 算法**。**
+
+**示例 1：**
+
+```
+输入：matrix = [[1,1,1],[1,0,1],[1,1,1]]
+输出：[[1,0,1],[0,0,0],[1,0,1]]
+```
+
+**示例 2：**
+
+```
+输入：matrix = [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
+输出：[[0,0,0,0],[0,4,5,0],[0,3,1,0]]
+```
+
+## [289. 生命游戏](https://leetcode.cn/problems/game-of-life/)
+
+根据百度百科， **生命游戏** ，简称为 **生命** ，是英国数学家约翰·何顿·康威在 1970 年发明的细胞自动机。
+
+给定一个包含 `m × n` 个格子的面板，每一个格子都可以看成是一个细胞。每个细胞都具有一个初始状态： `1` 即为 **活细胞** （live），或 `0` 即为 **死细胞** （dead）。每个细胞与其八个相邻位置（水平，垂直，对角线）的细胞都遵循以下四条生存定律：
+
+1. 如果活细胞周围八个位置的活细胞数少于两个，则该位置活细胞死亡；
+2. 如果活细胞周围八个位置有两个或三个活细胞，则该位置活细胞仍然存活；
+3. 如果活细胞周围八个位置有超过三个活细胞，则该位置活细胞死亡；
+4. 如果死细胞周围正好有三个活细胞，则该位置死细胞复活；
+
+下一个状态是通过将上述规则同时应用于当前状态下的每个细胞所形成的，其中细胞的出生和死亡是 **同时** 发生的。给你 `m x n` 网格面板 `board` 的当前状态，返回下一个状态。
+
+给定当前 `board` 的状态，**更新** `board` 到下一个状态。
+
+**注意** 你不需要返回任何东西。
+
+**示例 1：**
+
+```
+输入：board = [[0,1,0],[0,0,1],[1,1,1],[0,0,0]]
+输出：[[0,0,0],[1,0,1],[0,1,1],[0,1,0]]
+```
+
+**示例 2：**
+
+```
+输入：board = [[1,1],[1,0]]
+输出：[[1,1],[1,1]]
+```
+
+> **思路一：用一个额外的二维数组记录每个位置周围的活细胞个数。**
+>
+> 1. **统计周围活细胞数量**
+>    **遍历每个细胞，若当前是活细胞（值为1），则对其周围8个相邻格子的活细胞计数进行贡献。**
+>    **使用辅助数组 `lifeCount` 记录每个位置的活细胞邻居数。**
+> 2. **根据规则更新状态**
+>    - **活细胞：若周围活细胞数 `<2` 或 `>3`，则死亡（置0）。**
+>    - **死细胞：若周围活细胞数 `=3`，则复活（置1）。**
+
+```csharp
+public class Solution {
+    public void GameOfLife(int[][] board) {
+        int m = board.Length;
+        if (m == 0) return;
+        int n = board[0].Length;
+
+        int[][] lifeCount = new int[m][];
+        for (int i = 0; i < m; i++) {
+            lifeCount[i] = new int[n];
+        }
+
+        // 统计每个活细胞对周围格子的贡献
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (board[i][j] == 1) {
+                    // 遍历周围8个格子
+                    for (int row = i - 1; row <= i + 1; row++) {
+                        for (int col = j - 1; col <= j + 1; col++) {
+                            if (row == i && col == j) continue; // 跳过自身
+                            if (row >= 0 && row < m && col >= 0 && col < n) {
+                                lifeCount[row][col]++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 根据规则更新细胞状态
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (board[i][j] == 1) {
+                    // 活细胞：检查邻居数是否导致死亡
+                    if (lifeCount[i][j] < 2 || lifeCount[i][j] > 3) {
+                        board[i][j] = 0;
+                    }
+                } else {
+                    // 死细胞：检查是否复活
+                    if (lifeCount[i][j] == 3) {
+                        board[i][j] = 1;
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+> **思路二：使用状态标记，O(1)空间复杂度，原地转换。**
+>
+> 1. **状态标记**
+>    - **`-1`：原为活细胞（1），下一代死亡（0）。**
+>    - **`2`：原为死细胞（0），下一代复活（1）。**
+> 2. **统计邻居时的逻辑**
+>    **在 `CountLiveNeighbors` 方法中，统计的是原始活细胞的数量。标记 `-1` 表示细胞即将死亡，但此时仍需视为活细胞参与邻居的统计（因为其他细胞的状态更新依赖于当前原始状态）。**
+> 3. **状态转换**
+>    **最后遍历网格，将标记转换为最终状态：`-1` → `0`，`2` → `1`。**
+
+```csharp
+public class Solution {
+    public void GameOfLife(int[][] board) {
+        if (board == null || board.Length == 0) return;
+        int m = board.Length, n = board[0].Length;
+
+        // 定义状态标记：
+        // -1 表示原为活细胞，现在死亡（1 → 0）
+        // 2  表示原为死细胞，现在复活（0 → 1）
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                int liveNeighbors = CountLiveNeighbors(board, i, j, m, n);
+                
+                if (board[i][j] == 1) {
+                    // 活细胞根据规则死亡
+                    if (liveNeighbors < 2 || liveNeighbors > 3) {
+                        board[i][j] = -1; // 标记为即将死亡
+                    }
+                } else {
+                    // 死细胞根据规则复活
+                    if (liveNeighbors == 3) {
+                        board[i][j] = 2; // 标记为即将复活
+                    }
+                }
+            }
+        }
+
+        // 将标记转换为最终状态
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (board[i][j] == -1) {
+                    board[i][j] = 0;
+                } else if (board[i][j] == 2) {
+                    board[i][j] = 1;
+                }
+            }
+        }
+    }
+
+    private int CountLiveNeighbors(int[][] board, int x, int y, int m, int n) {
+        int count = 0;
+        for (int i = x - 1; i <= x + 1; i++) {
+            for (int j = y - 1; j <= y + 1; j++) {
+                // 跳过自身
+                if (i == x && j == y) continue;
+                if (i >= 0 && i < m && j >= 0 && j < n) {
+                    // 统计原为活细胞的状态（包括标记为-1的）
+                    if (board[i][j] == 1 || board[i][j] == -1) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+}
+```
+
+## [383. 赎金信](https://leetcode.cn/problems/ransom-note/)
+
+给你两个字符串：`ransomNote` 和 `magazine` ，判断 `ransomNote` 能不能由 `magazine` 里面的字符构成。
+
+如果可以，返回 `true` ；否则返回 `false` 。
+
+`magazine` 中的每个字符只能在 `ransomNote` 中使用一次。
+
+**示例 1：**
+
+```
+输入：ransomNote = "a", magazine = "b"
+输出：false
+```
+
+**示例 2：**
+
+```
+输入：ransomNote = "aa", magazine = "ab"
+输出：false
+```
+
+**示例 3：**
+
+```
+输入：ransomNote = "aa", magazine = "aab"
+输出：true
+```
+
+> **思路一：用字典存储`magazine`中每个字符出现的个数，遍历`ransomNote`挨个扣除；扣到0时或字符不存在时返回`false`。**
+
+```csharp
+public class Solution {
+    public bool CanConstruct(string ransomNote, string magazine) {
+        int rLen = ransomNote.Length;
+        int mLen = magazine.Length;
+        if(rLen > mLen) {
+            return false;
+        }
+
+        // 统计magazine中每个字符出现的个数
+        Dictionary<char, int> mDict = new Dictionary<char, int>();
+        foreach(char c in magazine) {
+            if(mDict.ContainsKey(c)) {
+                mDict[c] ++;
+            } else {
+                mDict[c] = 1;
+            }
+        }
+
+        // 遍历ransomNote，依次从字典中扣除
+        foreach(char c in ransomNote) {
+            if(mDict.ContainsKey(c)) {
+                if(mDict[c] == 0) {
+                    // 碰到个数已经用完了，直接返回false
+                    return false;
+                } else {
+                    mDict[c] --;
+                }
+            } else {
+                // 碰到mDict中没有的字符，直接返回false
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+```
+
+> **思路二：用一个长度为26个整型数组存储magazine中每个字符出现的个数。**
+
+```csharp
+public class Solution {
+    public bool CanConstruct(string ransomNote, string magazine) {
+        if (ransomNote.Length > magazine.Length) return false;
+        int[] counts = new int[26];
+        foreach (char c in magazine) {
+            counts[c - 'a']++;
+        }
+        foreach (char c in ransomNote) {
+            int index = c - 'a';
+            counts[index]--;
+            if (counts[index] < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+```
+
+## [205. 同构字符串](https://leetcode.cn/problems/isomorphic-strings/)
+
+给定两个字符串 `s` 和 `t` ，判断它们是否是同构的。
+
+如果 `s` 中的字符可以按某种映射关系替换得到 `t` ，那么这两个字符串是同构的。
+
+每个出现的字符都应当映射到另一个字符，同时不改变字符的顺序。不同字符不能映射到同一个字符上，相同字符只能映射到同一个字符上，字符可以映射到自己本身。
+
+**示例 1:**
+
+```
+输入：s = "egg", t = "add"
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：s = "foo", t = "bar"
+输出：false
+```
+
+**示例 3：**
+
+```
+输入：s = "paper", t = "title"
+输出：true
+```
+
+> **思路一：使用两个哈希表（字典）分别记录 `s→t` 和 `t→s` 的映射关系。**
+
+```csharp
+public class Solution {
+    public bool IsIsomorphic(string s, string t) {
+        int len = s.Length; // s和t长度相同
+
+        // 用两个字典分别记录s→t和t→s的映射，确保双向唯一
+        Dictionary<char, char> sDict = new Dictionary<char, char>();
+        Dictionary<char, char> tDict = new Dictionary<char, char>();
+        
+        for (int i = 0; i < len; i++) {
+            char sChar = s[i], tChar = t[i];
+            
+            // 处理s→t的映射：检查sChar是否已正确映射到tChar
+            if (sDict.ContainsKey(sChar)) {
+                if (sDict[sChar] != tChar) {
+                    return false; // 已存在映射，但与当前tChar冲突
+                }
+            } else {
+                sDict[sChar] = tChar; // 添加新映射
+            }
+            
+            // 处理t→s的映射：检查tChar是否被其他字符映射过
+            if (tDict.ContainsKey(tChar)) {
+                if (tDict[tChar] != sChar) {
+                    return false; // tChar已被映射到其他字符
+                }
+            } else {
+                tDict[tChar] = sChar; // 添加新映射
+            }
+        }
+        
+        return true;
+    }
+}
+```
+
+> **思路二：使用数组代替哈希表，字符通常为ASCII（0-255），可以用两个数组分别维护 `s→t` 和 `t→s` 的映射，数组索引直接对应字符的ASCII码。**
+
+```csharp
+public class Solution {
+    public bool IsIsomorphic(string s, string t) {
+        int[] sMap = new int[256]; // 记录s中字符到t的映射
+        int[] tMap = new int[256]; // 记录t中字符到s的映射
+        Array.Fill(sMap, -1);      // 初始化为-1，表示未映射
+        Array.Fill(tMap, -1);
+        
+        for (int i = 0; i < s.Length; i++) {
+            char sChar = s[i];
+            char tChar = t[i];
+            
+            // 检查s到t的映射是否冲突
+            if (sMap[sChar] != -1) {
+                if (sMap[sChar] != tChar) return false;
+            } else {
+                // 检查t中的字符是否已被其他s字符映射
+                if (tMap[tChar] != -1) return false;
+                // 更新双向映射
+                sMap[sChar] = tChar;
+                tMap[tChar] = sChar;
+            }
+        }
+        return true;
+    }
+}
+```
+
+## [290. 单词规律](https://leetcode.cn/problems/word-pattern/)
+
+给定一种规律 `pattern` 和一个字符串 `s` ，判断 `s` 是否遵循相同的规律。
+
+这里的 **遵循** 指完全匹配，例如， `pattern` 里的每个字母和字符串 `s` 中的每个非空单词之间存在着双向连接的对应规律。 
+
+**示例1:**
+
+```
+输入: pattern = "abba", s = "dog cat cat dog"
+输出: true
+```
+
+**示例 2:**
+
+```
+输入:pattern = "abba", s = "dog cat cat fish"
+输出: false
+```
+
+**示例 3:**
+
+```
+输入: pattern = "aaaa", s = "dog cat cat dog"
+输出: false
+```
+
+> **思路一：两个字典（哈希表）双向映射。**
+
+```csharp
+public class Solution {
+    public bool WordPattern(string pattern, string s) {
+        // 将字符串 s 按空格分割成单词数组
+        string[] words = s.Split(' ');
+        
+        // 如果 pattern 的长度与单词数组的长度不一致，直接返回 false
+        if (pattern.Length != words.Length) return false;
+        
+        // 用两个字典分别记录 pattern 到单词的映射和单词到 pattern 的映射
+        Dictionary<char, string> charToWord = new Dictionary<char, string>();
+        Dictionary<string, char> wordToChar = new Dictionary<string, char>();
+        
+        for (int i = 0; i < pattern.Length; i++) {
+            char currentChar = pattern[i];
+            string currentWord = words[i];
+            
+            // 检查 pattern 到单词的映射是否冲突
+            if (charToWord.ContainsKey(currentChar)) {
+                if (charToWord[currentChar] != currentWord) return false;
+            } else {
+                // 检查单词是否已经被其他 pattern 字符映射
+                if (wordToChar.ContainsKey(currentWord)) return false;
+                
+                // 添加新的映射
+                charToWord[currentChar] = currentWord;
+                wordToChar[currentWord] = currentChar;
+            }
+        }
+        
+        return true;
+    }
+}
+```
+
+> **思路二：通过检查 `pattern` 中每个字符和 `s` 中每个单词的首次出现索引是否一致，来判断它们是否遵循相同的映射规律。**
+
+```csharp
+public class Solution {
+    public bool WordPattern(string pattern, string s) {
+        // 将字符串 s 按空格分割成单词列表
+        List<string> words = s.Split(' ').ToList();
+        
+        // 如果 pattern 的长度与单词列表的长度不一致，直接返回 false
+        if (pattern.Length != words.Count) return false;
+        
+        // 遍历 pattern 和单词列表，检查字符和单词的索引是否一致
+        for (int i = 0; i < pattern.Length; i++) {
+            // 获取当前字符在 pattern 中的第一个索引
+            int patternIndex = pattern.IndexOf(pattern[i]);
+            // 获取当前单词在单词列表中的第一个索引
+            int wordIndex = words.IndexOf(words[i]);
+            
+            // 如果索引不一致，说明映射关系不匹配，返回 false
+            if (patternIndex != wordIndex) return false;
+        }
+        
+        return true;
+    }
+}
+```
+
+## [242. 有效的字母异位词](https://leetcode.cn/problems/valid-anagram/)
+
+给定两个字符串 `s` 和 `t` ，编写一个函数来判断 `t` 是否是 `s` 的字母异位词。
+
+**示例 1:**
+
+```
+输入: s = "anagram", t = "nagaram"
+输出: true
+```
+
+**示例 2:**
+
+```
+输入: s = "rat", t = "car"
+输出: false
+```
+
+> **思路一：通过统计两个字符串中每个字符的出现次数，判断它们的字符分布是否完全相同。**
+
+```csharp
+public class Solution {
+    public bool IsAnagram(string s, string t) {
+        int len = s.Length;
+        // 如果长度不同，直接返回 false
+        if (len != t.Length) return false;
+
+        // 用一个长度为 26 的数组统计 s 中每个字符出现的次数
+        int[] counts = new int[26];
+        for (int i = 0; i < len; i++) {
+            counts[s[i] - 'a']++; // 统计 s 中字符的出现次数
+        }
+
+        // 遍历 t，每遇到一个字符就扣除 counts，如果不够扣除，返回 false
+        for (int i = 0; i < len; i++) {
+            int index = t[i] - 'a';
+            if (counts[index] == 0) {
+                return false; // t 中的字符比 s 中多
+            }
+            counts[index]--; // 扣除计数
+        }
+
+        return true; // 所有字符的计数匹配
+    }
+}
+```
+
+> **思路二：排序`s`和`t`，判断排序后的字符串是否相同。**
+
+```csharp
+public class Solution {
+    public bool IsAnagram(string s, string t) {
+        // 如果长度不同，直接返回 false
+        if (s.Length != t.Length) return false;
+
+        // 将字符串转换为字符数组并排序
+        char[] sArray = s.ToCharArray();
+        char[] tArray = t.ToCharArray();
+        Array.Sort(sArray);
+        Array.Sort(tArray);
+
+        // 使用 SequenceEqual 比较数组内容
+        return sArray.SequenceEqual(tArray);
     }
 }
 ```
