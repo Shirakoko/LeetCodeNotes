@@ -3739,3 +3739,302 @@ public class Solution {
 }
 ```
 
+## [49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+
+给你一个字符串数组，请你将 **字母异位词** 组合在一起。可以按任意顺序返回结果列表。
+
+**字母异位词** 是由重新排列源单词的所有字母得到的一个新单词。
+
+**示例 1:**
+
+```
+输入: strs = ["eat", "tea", "tan", "ate", "nat", "bat"]
+输出: [["bat"],["nat","tan"],["ate","eat","tea"]]
+```
+
+**示例 2:**
+
+```
+输入: strs = [""]
+输出: [[""]]
+```
+
+**示例 3:**
+
+```
+输入: strs = ["a"]
+输出: [["a"]]
+```
+
+> **思路一：暴力双层循环，每次判断两个字符串是否是异位词。**
+
+```csharp
+public class Solution {
+    public IList<IList<string>> GroupAnagrams(string[] strs) {
+        int n = strs.Length; // 单词个数
+        bool[] added = new bool[n]; // 用来标记每个单词是否已经加入列表
+
+        IList<IList<string>> res = new List<IList<string>>(); // 结果
+
+        for(int i=0; i<n; i++) {
+            if(added[i]) {
+                // 跳过已经加入列表的单词
+                continue;
+            }
+            
+            // 新初始化一个列表，把str[i]加入列表
+            IList<string> list = new List<string>(){strs[i]}; 
+            added[i] = true;
+            for(int j=i+1; j<n; j++) {
+                // 跳过已经加入列表的单词
+                if(added[j]) {
+                    continue;
+                }
+
+                if(IsAnagram(strs[i], strs[j])) {
+                    list.Add(strs[j]); 
+                    added[j] = true;
+                }
+            }
+            res.Add(list);
+        }
+
+        return res;
+    }
+
+    /** 两个字符串是否是异位词 */
+    public bool IsAnagram(string s, string t) {
+        int len = s.Length;
+        if(len != t.Length) return false;
+
+        // 用一个长度为26的数组统计s中每个字符出现的次数
+        int[] counts = new int[26];
+        for(int i=0; i<len; i++) {
+            counts[s[i] - 'a']++;
+        }
+
+        // 遍历t，每遇到一个字符就扣除counts，如果不够扣除，返回false
+        for(int i=0; i<len; i++) {
+            int index = t[i] - 'a';
+            if(counts[index] == 0) {
+                return false;
+            }
+            counts[index] --;
+        }
+
+        return true;
+    }
+}
+```
+
+> **思路二：排序法，将每个字符串排序，排序后的字符串作为键，原字符串作为值存入哈希表。**
+
+```csharp
+public class Solution {
+    public IList<IList<string>> GroupAnagrams(string[] strs) {
+        Dictionary<string, List<string>> dict = new Dictionary<string, List<string>>();
+
+        foreach(string str in strs) {
+            // 将字符串排序
+            char[] charArray = str.ToCharArray();
+            Array.Sort(charArray);
+            string sortedStr = new string(charArray);
+
+            // 将排序后的字符串作为键，原字符串作为值存入哈希表
+            if(!dict.ContainsKey(sortedStr)) {
+                dict[sortedStr] = new List<string>();
+            }
+
+            dict[sortedStr].Add(str);
+        }
+
+        // 返回字典中所有的值
+        return new List<IList<string>>(dict.Values);
+    }
+}
+```
+
+## [1. 两数之和](https://leetcode.cn/problems/two-sum/)
+
+给定一个整数数组 `nums` 和一个整数目标值 `target`，请你在该数组中找出 **和为目标值** *`target`* 的那 **两个** 整数，并返回它们的数组下标。
+
+你可以假设每种输入只会对应一个答案，并且你不能使用两次相同的元素。
+
+你可以按任意顺序返回答案。
+
+**示例 1：**
+
+```
+输入：nums = [2,7,11,15], target = 9
+输出：[0,1]
+解释：因为 nums[0] + nums[1] == 9 ，返回 [0, 1] 。
+```
+
+**示例 2：**
+
+```
+输入：nums = [3,2,4], target = 6
+输出：[1,2]
+```
+
+**示例 3：**
+
+```
+输入：nums = [3,3], target = 6
+输出：[0,1]
+```
+
+> **思路一：用一个额外的数组来记录排序后每个元素的原始下标，然后排序+双指针。**
+
+```csharp
+public class Solution {
+    public int[] TwoSum(int[] nums, int target) {
+        // 创建一个数组，记录每个元素的原始下标
+        int[] indexes = new int[nums.Length];
+        for (int i = 0; i < nums.Length; i++) {
+            indexes[i] = i;
+        }
+
+        // 对数组进行排序，同时保持原始下标的对应关系
+        Array.Sort(nums, indexes);
+
+        // 双指针法
+        int left = 0, right = nums.Length - 1;
+        while (left < right) {
+            int sum = nums[left] + nums[right];
+            if (sum < target) {
+                left++;
+            } else if (sum > target) {
+                right--;
+            } else {
+                // 找到目标值，返回原始下标
+                return new int[] { indexes[left], indexes[right] };
+            }
+        }
+
+        // 如果没有找到，返回空数组（根据题目描述，假设一定有解）
+        return new int[0];
+    }
+}
+```
+
+> **思路二：遍历数组，对于每个元素 `nums[i]`，检查 `target - nums[i]` 是否在哈希表中。**
+>
+> - **如果存在，说明找到了两个数，直接返回它们的下标。**
+> - **如果不存在，将当前元素的值和下标存入哈希表。**
+
+```csharp
+public class Solution {
+    public int[] TwoSum(int[] nums, int target) {
+        // 哈希表，存储元素值和对应的下标
+        Dictionary<int, int> map = new Dictionary<int, int>();
+
+        for (int i = 0; i < nums.Length; i++) {
+            int complement = target - nums[i];
+            // 检查哈希表中是否存在 complement
+            if (map.ContainsKey(complement)) {
+                return new int[] { map[complement], i };
+            }
+            // 将当前元素的值和下标存入哈希表
+            map[nums[i]] = i;
+        }
+
+        // 如果没有找到，返回空数组（根据题目描述，假设一定有解）
+        return new int[0];
+    }
+}
+```
+
+## [202. 快乐数](https://leetcode.cn/problems/happy-number/)
+
+编写一个算法来判断一个数 `n` 是不是快乐数。
+
+**「快乐数」** 定义为：
+
+- 对于一个正整数，每一次将该数替换为它每个位置上的数字的平方和。
+- 然后重复这个过程直到这个数变为 1，也可能是 **无限循环** 但始终变不到 1。
+- 如果这个过程 **结果为** 1，那么这个数就是快乐数。
+
+如果 `n` 是 *快乐数* 就返回 `true` ；不是，则返回 `false` 。
+
+**示例 1：**
+
+```
+输入：n = 19
+输出：true
+解释：
+12 + 92 = 82
+82 + 22 = 68
+62 + 82 = 100
+12 + 02 + 02 = 1
+```
+
+**示例 2：**
+
+```
+输入：n = 2
+输出：false
+```
+
+> **思路一：用哈希表记录遇到过的数，如果再次遇到，说明进入循环，就不是快乐数。**
+
+```csharp
+public class Solution {
+    public bool IsHappy(int n) {
+        // 用一个哈希表记录遇到过的数
+        HashSet<int> seen = new HashSet<int>();
+
+        while(n != 1 && seen.Contains(n) == false) {
+            seen.Add(n);
+            n = GetNext(n);
+        }
+
+        return n == 1;
+    }
+
+    /** 辅助函数：计算下一个数（每个数字的平方和）*/
+    private int GetNext(int n) {
+        int sum = 0;
+        while(n > 0) {
+            int digit = n % 10;
+            sum += digit * digit;
+            n = n / 10;
+        }
+        return sum;
+    }
+}
+```
+
+> **思路二：快慢指针；慢指针每次计算一次平方和，快指针每次计算两次平方和。**
+>
+> - **如果快指针等于慢指针，说明进入了循环。**
+> - **如果快指针等于 1，说明是快乐数。**
+
+```csharp
+public class Solution {
+    public bool IsHappy(int n) {
+        int slow = n;
+        int fast = GetNext(n);
+
+        while(fast != 1 && fast != slow) {
+            slow = GetNext(slow); // 慢指针走一步
+            fast = GetNext(GetNext(fast)); // 快指针走两步
+        }
+
+        // 如果快指针等于 1，说明是快乐数
+        return fast == 1;
+    }
+
+    /** 辅助函数：计算下一个数（每个数字的平方和）*/
+    private int GetNext(int n) {
+        int sum = 0;
+        while(n > 0) {
+            int digit = n % 10;
+            sum += digit * digit;
+            n = n / 10;
+        }
+        return sum;
+    }
+}
+```
+
