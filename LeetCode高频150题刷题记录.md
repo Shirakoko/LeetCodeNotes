@@ -4038,3 +4038,177 @@ public class Solution {
 }
 ```
 
+## [219. 存在重复元素 II](https://leetcode.cn/problems/contains-duplicate-ii/)
+
+给你一个整数数组 `nums` 和一个整数 `k` ，判断数组中是否存在两个 **不同的索引** `i` 和 `j` ，满足 `nums[i] == nums[j]` 且 `abs(i - j) <= k` 。如果存在，返回 `true` ；否则，返回 `false` 。
+
+**示例 1：**
+
+```
+输入：nums = [1,2,3,1], k = 3
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：nums = [1,0,1,1], k = 1
+输出：true
+```
+
+**示例 3：**
+
+```
+输入：nums = [1,2,3,1,2,3], k = 2
+输出：false
+```
+
+> **思路一：哈希表**
+
+```csharp
+public class Solution {
+    public bool ContainsNearbyDuplicate(int[] nums, int k) {
+        Dictionary<int, int> dict = new Dictionary<int, int>();
+
+        for(int i=0; i<nums.Length; i++) {
+            int num = nums[i];
+            if(dict.ContainsKey(num) == false) {
+                // 字典中不存在该元素，储存它的索引
+                dict[num] = i;
+            } else {
+                // 已存在该元素，判断索引是否和当前索引的相差 ≤ k
+                int abs = Math.Abs(dict[num] - i);
+                if(abs <= k) {
+                    return true;
+                } else {
+                    // 如果重复元素不满足条件，更新索引
+                    dict[num] = i;
+                }
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+> **思路二：集合+滑动窗口**
+
+```csharp
+public class Solution {
+    public bool ContainsNearbyDuplicate(int[] nums, int k) {
+        // 用一个哈希表储存窗口中的元素
+        HashSet<int> set = new HashSet<int>();
+        for(int i=0; i<nums.Length; i++) {
+            if(i > k) {
+                // 不在窗口的元素被移除
+                set.Remove(nums[i-k-1]);
+            }
+            int num = nums[i];
+            // 检查窗口中是否有重复元素
+            if(set.Contains(num)) {
+                return true;
+            } else {
+                // 否则加入当前元素
+                set.Add(num);
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+## [128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+给定一个未排序的整数数组 `nums` ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。
+
+请你设计并实现时间复杂度为 `O(n)` 的算法解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [100,4,200,1,3,2]
+输出：4
+解释：最长数字连续序列是 [1, 2, 3, 4]。它的长度为 4。
+```
+
+示例 2：****
+
+```
+输入：nums = [0,3,7,2,5,8,4,6,0,1]
+输出：9
+```
+
+> **思路一：先排序，再遍历数组，用 `HashSet` 记录已访问元素，动态更新最长连续序列的长度。**
+
+```csharp
+public class Solution {
+    public int LongestConsecutive(int[] nums) {
+        if (nums == null || nums.Length == 0) {
+            return 0;
+        }
+        // 给数组排序，O(nlog(n))
+        Array.Sort(nums);
+        int maxLen = 1; int curLen = 1; // 最大子序列长度和当前遍历的子序列长度
+        HashSet<int> set = new HashSet<int>();
+        for(int i=0; i<nums.Length; i++) {
+            int num = nums[i];
+            // 不包含上一个元素，说明序列断了，需要把curLen重置成1
+            if(set.Contains(num-1) == false) {
+                curLen = 1;
+                set.Add(num);
+            } else {
+                if(set.Contains(num) == false) {
+                    // 包含上一个元素，但不包含自己，需要更新curLen和maxLen
+                    curLen ++;
+                    maxLen = Math.Max(maxLen, curLen);
+                    set.Add(num);
+                }
+            }
+        }
+
+        return maxLen;
+    }
+}
+```
+
+> **思路二：使用 `HashSet`预先存储元素，先将数组中的所有元素存储在 `HashSet` 中。**
+>
+> 1. **查找连续序列：对于每个元素，只有当它是某个连续序列的起点时（即 `set.Contains(num - 1)` 为 `false`），才开始计算该序列的长度。**
+> 2. **计算序列长度：从当前元素开始，逐步查找下一个连续的元素，直到找不到为止，同时记录序列的长度。**
+> 3. **更新最大长度：每次找到一个完整的连续序列后，更新 `maxLen`。**
+
+```csharp
+public class Solution {
+    public int LongestConsecutive(int[] nums) {
+        if (nums == null || nums.Length == 0) {
+            return 0;
+        }
+        
+        // 使用集合储存所有元素
+        HashSet<int> set = new HashSet<int>(nums);
+        int maxLen = 0;
+
+        // 遍历集合里的每个元素
+        foreach(int num in set) {
+            if(set.Contains(num - 1) == false) {
+                // 只有当当前数字是序列的起点时，才开始计算长度
+                int curNum = num;
+                int curLen = 1;
+
+                // 循环查找下一个元素，直到集合不包含
+                while(set.Contains(curNum + 1) == true) {
+                    curNum ++; curLen ++;
+                }
+
+                // 更新最大长度
+                maxLen = Math.Max(maxLen, curLen);
+            }
+        }
+
+        return maxLen;
+    }
+}
+```
+
