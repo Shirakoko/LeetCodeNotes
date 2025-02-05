@@ -4212,3 +4212,116 @@ public class Solution {
 }
 ```
 
+## [228. 汇总区间](https://leetcode.cn/problems/summary-ranges/)
+
+给定一个  **无重复元素** 的 **有序** 整数数组 `nums` 。
+
+返回 ***恰好覆盖数组中所有数字** 的 **最小有序** 区间范围列表* 。也就是说，`nums` 的每个元素都恰好被某个区间范围所覆盖，并且不存在属于某个范围但不属于 `nums` 的数字 `x` 。
+
+列表中的每个区间范围 `[a,b]` 应该按如下格式输出：
+
+- `"a->b"` ，如果 `a != b`
+- `"a"` ，如果 `a == b`
+
+**示例 1：**
+
+```
+输入：nums = [0,1,2,4,5,7]
+输出：["0->2","4->5","7"]
+解释：区间范围是：
+[0,2] --> "0->2"
+[4,5] --> "4->5"
+[7,7] --> "7"
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,2,3,4,6,8,9]
+输出：["0","2->4","6","8->9"]
+解释：区间范围是：
+[0,0] --> "0"
+[2,4] --> "2->4"
+[6,6] --> "6"
+[8,9] --> "8->9"
+```
+
+> **思路：遍历数组，检查元素是否是起始点，如果是起始点则需要在`IList<int>`中新增字符串，并通过检查和后一个元素的关系得到结束点，起始点元素和结束点元素之间用`->`连接。**
+
+```csharp
+public class Solution {
+    public IList<string> SummaryRanges(int[] nums) {
+        int n = nums.Length;
+        IList<string> res = new List<string>();
+        if(n == 0) {
+            return res;
+        }
+
+        for(int i=0; i<n; i++) {
+            // 只有起始点才在列表中新增字符串
+            if(i == 0 || nums[i] != nums[i-1] + 1) {
+                StringBuilder sb = new StringBuilder(nums[i].ToString());
+                int end = i;
+                while(end < n-1 && nums[end] + 1 == nums[end + 1]) {
+                    end ++;
+                }
+                if(end > i) {
+                    sb.Append("->" + nums[end].ToString());
+                }
+
+                res.Add(sb.ToString());
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+## [56. 合并区间](https://leetcode.cn/problems/merge-intervals/)
+
+以数组 `intervals` 表示若干个区间的集合，其中单个区间为 `intervals[i] = [starti, endi]` 。请你合并所有重叠的区间，并返回 *一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间* 。
+
+**示例 1：**
+
+```
+输入：intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出：[[1,6],[8,10],[15,18]]
+解释：区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+```
+
+**示例 2：**
+
+```
+输入：intervals = [[1,4],[4,5]]
+输出：[[1,5]]
+解释：区间 [1,4] 和 [4,5] 可被视为重叠区间。
+```
+
+> **思路：把区间按照左端点升序排序，这样可合并的区间在排完序的列表中一定是连续的；再遍历排完序的列表，根据左端点是否大于结果列表中最后一个元素的右端点，判断需要新开一个区间还是合并已有区间。**
+
+```csharp
+public class Solution {
+    public int[][] Merge(int[][] intervals) {
+        IList<int[]> res = new List<int[]>();
+
+        // 先对intervals根据第一个元素大小进行排序
+        Array.Sort(intervals, (int[] x, int[] y) => {
+            return x[0] - y[0];
+        });
+
+        for (int i = 0; i < intervals.Length; i++) {
+            // 如果res为空或者当前区间的开始点大于res中最后一个区间的结束点，直接添加
+            if (res.Count == 0 || intervals[i][0] > res[res.Count - 1][1]) {
+                res.Add(new int[] { intervals[i][0], intervals[i][1] });
+            } else {
+                // 否则，合并区间，更新res中最后一个区间的结束点
+                res[res.Count - 1][1] = Math.Max(res[res.Count - 1][1], intervals[i][1]);
+            }
+        }
+
+        return res.ToArray();
+    }
+}
+```
+
