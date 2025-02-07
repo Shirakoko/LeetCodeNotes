@@ -4795,3 +4795,433 @@ public class MinStack {
 }
 ```
 
+## [150. 逆波兰表达式求值](https://leetcode.cn/problems/evaluate-reverse-polish-notation/)
+
+给你一个字符串数组 `tokens` ，表示一个根据 [逆波兰表示法](https://baike.baidu.com/item/逆波兰式/128437) 表示的算术表达式。
+
+请你计算该表达式。返回一个表示表达式值的整数。
+
+**注意：**
+
+- 有效的算符为 `'+'`、`'-'`、`'*'` 和 `'/'` 。
+- 每个操作数（运算对象）都可以是一个整数或者另一个表达式。
+- 两个整数之间的除法总是 **向零截断** 。
+- 表达式中不含除零运算。
+- 输入是一个根据逆波兰表示法表示的算术表达式。
+- 答案及所有中间计算结果可以用 **32 位** 整数表示。
+
+**示例 1：**
+
+```
+输入：tokens = ["2","1","+","3","*"]
+输出：9
+解释：该算式转化为常见的中缀算术表达式为：((2 + 1) * 3) = 9
+```
+
+**示例 2：**
+
+```
+输入：tokens = ["4","13","5","/","+"]
+输出：6
+解释：该算式转化为常见的中缀算术表达式为：(4 + (13 / 5)) = 6
+```
+
+**示例 3：**
+
+```
+输入：tokens = ["10","6","9","3","+","-11","*","/","*","17","+","5","+"]
+输出：22
+解释：该算式转化为常见的中缀算术表达式为：
+  ((10 * (6 / ((9 + 3) * -11))) + 17) + 5
+= ((10 * (6 / (12 * -11))) + 17) + 5
+= ((10 * (6 / -132)) + 17) + 5
+= ((10 * 0) + 17) + 5
+= (0 + 17) + 5
+= 17 + 5
+= 22
+```
+
+> **思路：栈模拟。**
+
+```csharp
+public class Solution {
+    public int EvalRPN(string[] tokens) {
+        Stack<int> stack = new Stack<int>();
+        
+        foreach (string token in tokens) {
+            if (token == "+") {
+                int b = stack.Pop(); // 第二个操作数
+                int a = stack.Pop(); // 第一个操作数
+                stack.Push(a + b);   // 计算结果并压入栈
+            } else if (token == "-") {
+                int b = stack.Pop(); // 第二个操作数
+                int a = stack.Pop(); // 第一个操作数
+                stack.Push(a - b);   // 计算结果并压入栈
+            } else if (token == "*") {
+                int b = stack.Pop(); // 第二个操作数
+                int a = stack.Pop(); // 第一个操作数
+                stack.Push(a * b);   // 计算结果并压入栈
+            } else if (token == "/") {
+                int b = stack.Pop(); // 第二个操作数
+                int a = stack.Pop(); // 第一个操作数
+                stack.Push(a / b);   // 计算结果并压入栈
+            } else {
+                // 普通数字，直接入栈
+                stack.Push(int.Parse(token));
+            }
+        }
+        
+        // 最终栈中剩下的唯一元素就是结果
+        return stack.Pop();
+    }
+}
+```
+
+## [224. 基本计算器](https://leetcode.cn/problems/basic-calculator/)
+
+给你一个字符串表达式 `s` ，请你实现一个基本计算器来计算并返回它的值。
+
+注意:不允许使用任何将字符串作为数学表达式计算的内置函数，比如 `eval()` 。 
+
+**示例 1：**
+
+```
+输入：s = "1 + 1"
+输出：2
+```
+
+**示例 2：**
+
+```
+输入：s = " 2-1 + 2 "
+输出：3
+```
+
+**示例 3：**
+
+```
+输入：s = "(1+(4+5+2)-3)+(6+8)"
+输出：23
+```
+
+> **思路：栈模拟；栈用于处理括号的嵌套。当遇到左括号 `(` 时，将当前的结果和符号压入栈中，以便在遇到右括号 `)` 时恢复；当遇到右括号 `)` 时，从栈中弹出符号和之前的结果，与当前结果结合。**
+>
+> **符号的处理：**
+>
+> - **使用变量 `sign` 表示当前数字的符号（`1` 表示正数，`-1` 表示负数）。**
+> - **遇到 `+` 或 `-` 时，更新 `sign`。**
+>
+> **数字的处理：**
+>
+> - **使用 `char.IsDigit` 判断字符是否为数字。**
+> - **如果当前字符是数字，则继续读取后续字符，直到遇到非数字字符，将完整的数字解析出来。**
+>
+> **括号的处理：**
+>
+> - **遇到左括号 `(` 时，将当前结果和符号压入栈中，并重置结果和符号。**
+> - **遇到右括号 `)` 时，从栈中弹出符号和之前的结果，与当前结果结合。**
+
+```csharp
+public class Solution {
+    public int Calculate(string s) {
+        Stack<int> stack = new Stack<int>();
+        int sign = 1; // 是否是负数的标志
+        int n = s.Length;
+        int res = 0;
+
+        for(int i=0; i<n; i++) {
+            char c = s[i];
+            // 遍历到数字，一直遍历直到下一位不再是数字
+            if(char.IsDigit(c)) {
+                int cur = c - '0';
+                while(i+1 < n && char.IsDigit(s[i+1])) {
+                    cur = cur * 10 + s[i+1] - '0'; i++;
+                }
+                res += sign * cur;
+            } else if(c == '+') {
+                sign = 1;
+            } else if(c == '-') {
+                sign = -1;
+            } else if(c == '(') {
+                stack.Push(res); // 压入之前的计算结果（如果左括号是第一个字符，压入0）
+                res = 0;
+                stack.Push(sign); // 把左括号前面的符号也压入
+                sign = 1;
+            } else if(c == ')') {
+                res = res * stack.Pop() /* 符号 */ + stack.Pop() /* 左括号之前的计算结果 */; 
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+> **思路二：辅助栈；栈 `ops` 用于存储括号前的符号。每当遇到左括号 `(` 时，将当前的符号压入栈中，表示进入一个新的括号层级；每当遇到右括号 `)` 时，从栈中弹出符号，表示退出当前括号层级；栈顶元素始终表示当前括号内的符号状态。**
+
+```csharp
+public class Solution {
+    public int Calculate(string s) {
+        Stack<int> stack = new Stack<int>();
+        Stack<int> ops = new Stack<int>(); ops.Push(1); // 储存操作符的栈
+        int sign = 1; // 是否是负数的标志
+        int n = s.Length;
+        int res = 0;
+
+        for(int i=0; i<n; i++) {
+            char c = s[i];
+            // 遍历到数字，一直遍历直到下一位不再是数字
+            if(char.IsDigit(c)) {
+                int cur = c - '0';
+                while(i+1 < n && char.IsDigit(s[i+1])) {
+                    cur = cur * 10 + s[i+1] - '0'; i++;
+                }
+                res += sign * cur;
+            } else if(c == '+') {
+                sign = ops.Peek();
+            } else if(c == '-') {
+                sign = -ops.Peek();
+            } else if(c == '(') {
+                // 压入操作符
+                ops.Push(sign);
+            } else if(c == ')') {
+                // 弹出操作符
+                ops.Pop();
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+## [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
+
+给你一个链表的头节点 `head` ，判断链表中是否有环。
+
+如果链表中有某个节点，可以通过连续跟踪 `next` 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 `pos` 来表示链表尾连接到链表中的位置（索引从 0 开始）。**注意：`pos` 不作为参数进行传递** 。仅仅是为了标识链表的实际情况。
+
+*如果链表中存在环* ，则返回 `true` 。 否则，返回 `false` 。
+
+**示例 1：**
+
+```
+输入：head = [3,2,0,-4], pos = 1
+输出：true
+解释：链表中有一个环，其尾部连接到第二个节点。
+```
+
+**示例 2：**
+
+```
+输入：head = [1,2], pos = 0
+输出：true
+解释：链表中有一个环，其尾部连接到第一个节点。
+```
+
+**示例 3：**
+
+```
+输入：head = [1], pos = -1
+输出：false
+解释：链表中没有环。
+```
+
+> **思路一：环形列表。**
+
+```csharp
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     public int val;
+ *     public ListNode next;
+ *     public ListNode(int x) {
+ *         val = x;
+ *         next = null;
+ *     }
+ * }
+ */
+public class Solution {
+    public bool HasCycle(ListNode head) {
+        if(head == null || head.next == null) {
+            return false;
+        }
+        ListNode fast = head; ListNode slow = head;
+        while(fast!= null && fast.next != null) {
+            fast = fast.next.next;
+            slow = slow.next;
+            if(fast == slow) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+> **思路二：用哈希集合记录已经访问过的节点。**
+
+```csharp
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     public int val;
+ *     public ListNode next;
+ *     public ListNode(int x) {
+ *         val = x;
+ *         next = null;
+ *     }
+ * }
+ */
+public class Solution {
+    public bool HasCycle(ListNode head) {
+        if(head == null || head.next == null) {
+            return false;
+        }
+        
+        HashSet<ListNode> visited = new HashSet<ListNode>();
+        ListNode current = head;
+        while(current != null) {
+            if(visited.Contains(current) == false) {
+                visited.Add(current);
+            } else {
+                return true;
+            }
+            current = current.next;
+        }
+
+        return false;
+    }
+}
+```
+
+## [2. 两数相加](https://leetcode.cn/problems/add-two-numbers/)
+
+给你两个 **非空** 的链表，表示两个非负的整数。它们每位数字都是按照 **逆序** 的方式存储的，并且每个节点只能存储 **一位** 数字。
+
+请你将两个数相加，并以相同形式返回一个表示和的链表。
+
+你可以假设除了数字 0 之外，这两个数都不会以 0 开头。 
+
+**示例 1：**
+
+```
+输入：l1 = [2,4,3], l2 = [5,6,4]
+输出：[7,0,8]
+解释：342 + 465 = 807.
+```
+
+**示例 2：**
+
+```
+输入：l1 = [0], l2 = [0]
+输出：[0]
+```
+
+**示例 3：**
+
+```
+输入：l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]
+输出：[8,9,9,9,0,0,0,1]
+```
+
+> **思路：每一位依次相加，用标志`isCarry`表示上一位是否有进位。**
+
+```csharp
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     public int val;
+ *     public ListNode next;
+ *     public ListNode(int val=0, ListNode next=null) {
+ *         this.val = val;
+ *         this.next = next;
+ *     }
+ * }
+ */
+public class Solution {
+    public ListNode AddTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode res = new ListNode(); ListNode head = res;
+
+        ListNode p1 = l1; ListNode p2 = l2;
+        bool isCarry = false; // 是否进位的标志
+        while(p1 != null && p2 != null) {
+            int add = p1.val + p2.val;
+            if(isCarry) add += 1;
+
+            // 更新是否进位
+            isCarry = add >= 10;
+            // 更新数字和结果链表的指针
+            res.next = new ListNode(add % 10); res = res.next;
+            p1 = p1.next; p2 = p2.next;
+        }
+
+        // 处理p1剩下的数字
+        while(p1 != null) {
+            int add = p1.val;
+            if(isCarry) add += 1;
+
+            isCarry = add >= 10;
+            res.next = new ListNode(add % 10); res = res.next;
+            p1 = p1.next;
+        }
+
+        // 处理p2剩下的数字
+        while(p2 != null) {
+            int add = p2.val;
+            if(isCarry) add += 1;
+
+            isCarry = add >= 10;
+            res.next = new ListNode(add % 10); res = res.next;
+            p2 = p2.next;
+        }
+
+        // 处理最后的进位
+        if(isCarry) {
+            res.next = new ListNode(1);
+        }
+
+        return head.next;
+    }
+}
+```
+
+优化：
+
+```csharp
+public class Solution {
+    public ListNode AddTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode res = new ListNode(); // 虚拟头节点
+        ListNode head = res; // 指向结果链表的头节点
+
+        ListNode p1 = l1, p2 = l2;
+        int carry = 0; // 进位标志
+
+        // 遍历两个链表
+        while (p1 != null || p2 != null) {
+            // 获取当前节点的值
+            int val1 = (p1 != null) ? p1.val : 0;
+            int val2 = (p2 != null) ? p2.val : 0;
+
+            // 计算当前位的和
+            int sum = val1 + val2 + carry;
+            carry = sum / 10; // 更新进位
+            res.next = new ListNode(sum % 10); // 创建新节点
+            res = res.next; // 移动结果链表的指针
+
+            // 移动链表指针
+            if (p1 != null) p1 = p1.next;
+            if (p2 != null) p2 = p2.next;
+        }
+
+        // 处理最后的进位
+        if (carry > 0) {
+            res.next = new ListNode(carry);
+        }
+
+        return head.next; // 返回结果链表的头节点
+    }
+}
+```
+
