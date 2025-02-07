@@ -4325,3 +4325,473 @@ public class Solution {
 }
 ```
 
+## [57. 插入区间](https://leetcode.cn/problems/insert-interval/)
+
+给你一个 **无重叠的** *，*按照区间起始端点排序的区间列表 `intervals`，其中 `intervals[i] = [starti, endi]` 表示第 `i` 个区间的开始和结束，并且 `intervals` 按照 `starti` 升序排列。同样给定一个区间 `newInterval = [start, end]` 表示另一个区间的开始和结束。
+
+在 `intervals` 中插入区间 `newInterval`，使得 `intervals` 依然按照 `starti` 升序排列，且区间之间不重叠（如果有必要的话，可以合并区间）。
+
+返回插入之后的 `intervals`。
+
+**注意** 你不需要原地修改 `intervals`。你可以创建一个新数组然后返回它。 
+
+**示例 1：**
+
+```
+输入：intervals = [[1,3],[6,9]], newInterval = [2,5]
+输出：[[1,5],[6,9]]
+```
+
+**示例 2：**
+
+```
+输入：intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8]
+输出：[[1,2],[3,10],[12,16]]
+解释：这是因为新的区间 [4,8] 与 [3,5],[6,7],[8,10] 重叠。
+```
+
+> **思路一：寻找适合的 `newInterval` 插入时机**
+>
+> 1. **遍历区间列表，找到 `newInterval` 应该插入的位置。**
+> 2. **在插入时，检查是否需要与前后区间合并。**
+> 3. **最后处理未插入的 `newInterval`。**
+
+```csharp
+public class Solution {
+    public int[][] Insert(int[][] intervals, int[] newInterval) {
+        IList<int[]> res = new List<int[]>();
+        bool isAdded = false; // 区间newInterval是否已插入
+        foreach(int[] curInterval in intervals) {
+            if(!isAdded && curInterval[0] > newInterval[0]) {
+                // 找到适合插入newInterval的时机
+                AddOrMerge(res, newInterval);
+                isAdded = true;
+            }
+            // 依次把每个区间加入结果
+            AddOrMerge(res, curInterval);
+        }
+
+        // 如果newInterval还没有被插入，则在最后插入
+        if(!isAdded) {
+            AddOrMerge(res, newInterval);
+        }
+
+        return res.ToArray();
+    }
+
+    /** 辅助函数，向已有区间插入或合并一个新的区间 */
+    private void AddOrMerge(IList<int[]> res, int[] interval) {
+        if(res.Count == 0 || res[res.Count - 1][1] < interval[0]) {
+            res.Add(interval);
+        } else {
+            res[res.Count - 1][1] = Math.Max(res[res.Count - 1][1], interval[1]);
+        }
+    }
+}
+```
+
+> **思路二：动态更新 `newInterval`，使其与所有重叠的区间合并。**
+>
+> 1. **遍历区间列表，将不与`newInterval`重叠的区间直接加入结果。**
+> 2. **将与`newInterval`重叠的区间与`newInterval`合并后动态更新 `newInterval` 。**
+> 3. **最后将 `newInterval` 加入结果。**
+
+```csharp
+public class Solution {
+    public int[][] Insert(int[][] intervals, int[] newInterval) {
+        IList<int[]> res = new List<int[]>();
+        
+        foreach(int[] curInterval in intervals) {
+            if(curInterval[1] < newInterval[0]) {
+                // newInterval之前的不重叠的区间直接插入
+                res.Add(curInterval);
+            } else if(curInterval[0] > newInterval[1]) {
+                // newInterval之后的不重叠的区间先插入newInterval，并替换newInterval
+                res.Add(newInterval);
+                newInterval = curInterval;
+            } else {
+                // 合并和newInterval重叠的interval
+                newInterval[0] = Math.Min(newInterval[0], curInterval[0]);
+                newInterval[1] = Math.Max(newInterval[1], curInterval[1]);
+            }
+        }
+        res.Add(newInterval);
+
+        return res.ToArray();
+    }
+}
+```
+
+## [452. 用最少数量的箭引爆气球](https://leetcode.cn/problems/minimum-number-of-arrows-to-burst-balloons/)
+
+有一些球形气球贴在一堵用 XY 平面表示的墙面上。墙面上的气球记录在整数数组 `points` ，其中`points[i] = [xstart, xend]` 表示水平直径在 `xstart` 和 `xend`之间的气球。你不知道气球的确切 y 坐标。
+
+一支弓箭可以沿着 x 轴从不同点 **完全垂直** 地射出。在坐标 `x` 处射出一支箭，若有一个气球的直径的开始和结束坐标为 `xstart`，`xend`， 且满足  `xstart ≤ x ≤ xend`，则该气球会被 **引爆** 。可以射出的弓箭的数量 **没有限制** 。 弓箭一旦被射出之后，可以无限地前进。
+
+给你一个数组 `points` ，*返回引爆所有气球所必须射出的 **最小** 弓箭数* 。
+
+**示例 1：**
+
+```
+输入：points = [[10,16],[2,8],[1,6],[7,12]]
+输出：2
+解释：气球可以用2支箭来爆破:
+在x = 6处射出箭，击破气球[2,8]和[1,6]。
+在x = 11处发射箭，击破气球[10,16]和[7,12]。
+```
+
+**示例 2：**
+
+```
+输入：points = [[1,2],[3,4],[5,6],[7,8]]
+输出：4
+解释：每个气球需要射出一支箭，总共需要4支箭。
+```
+
+**示例 3：**
+
+```
+输入：points = [[1,2],[2,3],[3,4],[4,5]]
+输出：2
+解释：气球可以用2支箭来爆破:
+在x = 2处发射箭，击破气球[1,2]和[2,3]。
+在x = 4处射出箭，击破气球[3,4]和[4,5]。
+```
+
+> **思路一：排序+合并区间，遍历按左端点升序排序后的区间，遇到不重叠的区间直接加入，遇到重叠的区间取交集。**
+
+```csharp
+public class Solution {
+    public int FindMinArrowShots(int[][] points) {
+        // 存交集
+        IList<int[]> res = new List<int[]>();
+
+        // 给区间按左端点大小升序排序
+        Array.Sort(points, (int[] x, int[] y) => {
+            return x[0].CompareTo(y[0]);  // 使用 CompareTo 避免溢出
+        });
+
+        // 合并区间
+        foreach(var curInterval in points) {
+            if(res.Count == 0 || res[res.Count-1][1] < curInterval[0]) {
+                res.Add(curInterval);
+            } else {
+                res[res.Count-1][0] = Math.Max(res[res.Count-1][0], curInterval[0]);
+                res[res.Count-1][1] = Math.Min(res[res.Count-1][1], curInterval[1]);
+            }
+        }
+
+        return res.Count;
+    }
+}
+```
+
+> **思路二：排序+贪心算法，遍历按右端点升序排序后的区间，箭的位置为最左边的右端点，遇到不重叠的区间则增加箭的数量。**
+>
+> - **按右端点排序：确保每次处理的区间是结束最早的，从而最大化每支箭的覆盖范围。**
+> - **选最左区间的右端点：作为射箭位置，可以覆盖尽可能多的区间，达到贪心的最优选择。**
+
+```csharp
+public class Solution {
+    public int FindMinArrowShots(int[][] points) {
+        // 给区间按右端点大小升序排序
+        Array.Sort(points, (int[] x, int[] y) => {
+            return x[1].CompareTo(y[1]);  // 使用 CompareTo 避免溢出
+        });
+
+        // 贪心算法
+        int pos = points[0][1]; // 初始位置为右端点最左的区间的右端点
+        int res = 1; // 需要的箭个数
+        foreach(var curInterval in points) {
+            if(curInterval[0] > pos) {
+                // 当前位置无法射中该区间，需要新增箭并更新pos为该区间的右端点
+                pos = curInterval[1];
+                res ++;
+            }
+        }
+
+        return res;
+    }
+}
+```
+
+## [20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/)
+
+给定一个只包括 `'('`，`')'`，`'{'`，`'}'`，`'['`，`']'` 的字符串 `s` ，判断字符串是否有效。
+
+有效字符串需满足：
+
+1. 左括号必须用相同类型的右括号闭合。
+2. 左括号必须以正确的顺序闭合。
+3. 每个右括号都有一个对应的相同类型的左括号。
+
+**示例 1：**
+
+```
+输入：s = "()"
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：s = "()[]{}"
+输出：true
+```
+
+**示例 3：**
+
+```
+输入：s = "(]"
+输出：false
+```
+
+**示例 4：**
+
+```
+输入：s = "([])"
+输出：true
+```
+
+> **思路：字典存储括号对的匹配关系，左括号入栈，右括号弹栈判断是否为括号对。**
+
+```csharp
+public class Solution {
+    public bool IsValid(string s) {
+        if (s.Length % 2 > 0) {
+            return false;
+        }
+
+        // 使用字典存储括号的对应关系
+        Dictionary<char, char> bracketPairs = new Dictionary<char, char> {
+            { ')', '(' },
+            { ']', '[' },
+            { '}', '{' }
+        };
+
+        Stack<char> stack = new Stack<char>();
+
+        foreach (char c in s) {
+            if (bracketPairs.ContainsValue(c)) {
+                // 左括号入栈
+                stack.Push(c);
+            } else if (bracketPairs.ContainsKey(c)) {
+                // 右括号，检查栈顶元素是否匹配
+                if (stack.Count == 0 || stack.Peek() != bracketPairs[c]) {
+                    return false;
+                }
+                stack.Pop();
+            }
+        }
+
+        return stack.Count == 0;
+    }
+}
+```
+
+## [71. 简化路径](https://leetcode.cn/problems/simplify-path/)
+
+给你一个字符串 `path` ，表示指向某一文件或目录的 Unix 风格 **绝对路径** （以 `'/'` 开头），请你将其转化为 **更加简洁的规范路径**。
+
+在 Unix 风格的文件系统中规则如下：
+
+- 一个点 `'.'` 表示当前目录本身。
+- 此外，两个点 `'..'` 表示将目录切换到上一级（指向父目录）。
+- 任意多个连续的斜杠（即，`'//'` 或 `'///'`）都被视为单个斜杠 `'/'`。
+- 任何其他格式的点（例如，`'...'` 或 `'....'`）均被视为有效的文件/目录名称。
+
+返回的 **简化路径** 必须遵循下述格式：
+
+- 始终以斜杠 `'/'` 开头。
+- 两个目录名之间必须只有一个斜杠 `'/'` 。
+- 最后一个目录名（如果存在）**不能** 以 `'/'` 结尾。
+- 此外，路径仅包含从根目录到目标文件或目录的路径上的目录（即，不含 `'.'` 或 `'..'`）。
+
+返回简化后得到的 **规范路径** 。
+
+**示例 1：**
+
+```
+输入：path = "/home/"
+输出："/home"
+解释：应删除尾随斜杠。
+```
+
+**示例 2：**
+
+```
+输入：path = "/home//foo/"
+输出："/home/foo"
+解释：多个连续的斜杠被单个斜杠替换。
+```
+
+**示例 3：**
+
+```
+输入：path = "/home/user/Documents/../Pictures"
+输出："/home/user/Pictures"
+解释：两个点 `".."` 表示上一级目录（父目录）。
+```
+
+**示例 4：**
+
+```
+输入：path = "/../"
+输出："/"
+解释：不可能从根目录上升一级目录。
+```
+
+**示例 5：**
+
+```
+输入：path = "/.../a/../b/c/../d/./"
+输出："/.../b/d"
+解释："..."在这个问题中是一个合法的目录名。
+```
+
+> **思路：用栈，先把字符串用`/`分隔，遍历字符串数组，遇到空字符串和`.`无需处理，遇到`..`若栈中元素个数不为0则弹栈，其他情况入栈；最后再用字符串拼接得到结果。**
+
+```csharp
+public class Solution {
+    public string SimplifyPath(string path) {
+        string[] words = path.Split('/');
+        Stack<string> stack = new Stack<string>();
+
+        foreach (string word in words) {
+            // 忽略空字符串
+            if(word.Length > 0) {
+                if(word != "." && word != "..") {
+                    // 合法目录名入栈
+                    stack.Push(word);
+                } else if(word == "..") {
+                    // 遇到".."弹栈
+                    if(stack.Count > 0) {
+                        stack.Pop();
+                    }
+                }
+            }
+        }
+
+        // 处理返回的字符串，把栈转换成数组，每个元素用"/"分隔，拼接在第一个"/"末尾
+        StringBuilder result = new StringBuilder("/");
+        var reversedStack = stack.Reverse();
+        result.Append(string.Join("/", reversedStack));
+
+        return result.ToString();
+    }
+}
+```
+
+## [155. 最小栈](https://leetcode.cn/problems/min-stack/)
+
+设计一个支持 `push` ，`pop` ，`top` 操作，并能在常数时间内检索到最小元素的栈。
+
+实现 `MinStack` 类:
+
+- `MinStack()` 初始化堆栈对象。
+- `void push(int val)` 将元素val推入堆栈。
+- `void pop()` 删除堆栈顶部的元素。
+- `int top()` 获取堆栈顶部的元素。
+- `int getMin()` 获取堆栈中的最小元素。
+
+**示例 1:**
+
+```
+输入：
+["MinStack","push","push","push","getMin","pop","top","getMin"]
+[[],[-2],[0],[-3],[],[],[],[]]
+
+输出：
+[null,null,null,null,-3,null,0,-2]
+
+解释：
+MinStack minStack = new MinStack();
+minStack.push(-2);
+minStack.push(0);
+minStack.push(-3);
+minStack.getMin();   --> 返回 -3.
+minStack.pop();
+minStack.top();      --> 返回 0.
+minStack.getMin();   --> 返回 -2.
+```
+
+> **思路一：辅助栈，使用一个辅助栈`minStack`维护当前栈`stack`中的最小元素，每次压入元素时比较压入元素和栈顶元素，决定是否压入`minStack`，从而保证它是递增栈，且栈顶是`stack`中的最小元素；弹栈时比较弹出元素是否是最小元素，是则`minStack`中同步弹出。**
+
+```csharp
+public class MinStack {
+    private Stack<int> stack;
+    // 辅助栈，栈顶永远是当前栈的最小元素
+    private Stack<int> minStack;
+
+    public MinStack() {
+        stack = new Stack<int>();
+        minStack = new Stack<int>();
+    }
+    
+    public void Push(int val) {
+        stack.Push(val);
+        if(minStack.Count == 0 || val <= minStack.Peek()) {
+            minStack.Push(val);
+        }
+    }
+    
+    public void Pop() {
+        if(stack.Count == 0) {
+            return;
+        }
+        int val = stack.Pop();
+        if(minStack.Peek() == val) {
+            // 说明当前出栈元素是最小元素，更新minStack
+            minStack.Pop();
+        }
+    }
+    
+    public int Top() {
+        return stack.Peek();
+    }
+    
+    public int GetMin() {
+        return minStack.Peek();
+    }
+}
+```
+
+> **思路二：主栈 `stack` 和辅助栈 `minStack` 始终保持相同数量的元素。**
+
+```csharp
+public class MinStack {
+    private Stack<int> stack;
+    private Stack<int> minStack;
+
+    public MinStack() {
+        stack = new Stack<int>();
+        minStack = new Stack<int>();
+    }
+    
+    public void Push(int val) {
+        stack.Push(val);
+        // 如果 minStack 为空，或者 val 比 minStack 的栈顶小，则压入 val
+        // 否则压入 minStack 的栈顶元素（保持两个栈元素数量相同）
+        if (minStack.Count == 0 || val < minStack.Peek()) {
+            minStack.Push(val);
+        } else {
+            minStack.Push(minStack.Peek());
+        }
+    }
+    
+    public void Pop() {
+        if (stack.Count == 0) return;
+        stack.Pop();
+        minStack.Pop();
+    }
+    
+    public int Top() {
+        return stack.Peek();
+    }
+    
+    public int GetMin() {
+        return minStack.Peek();
+    }
+}
+```
+
