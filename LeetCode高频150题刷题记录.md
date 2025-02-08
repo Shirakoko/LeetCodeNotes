@@ -5225,3 +5225,106 @@ public class Solution {
 }
 ```
 
+## [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/)
+
+将两个升序链表合并为一个新的 **升序** 链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。 
+
+**示例 1：**
+
+```
+输入：l1 = [1,2,4], l2 = [1,3,4]
+输出：[1,1,2,3,4,4]
+```
+
+**示例 2：**
+
+```
+输入：l1 = [], l2 = []
+输出：[]
+```
+
+**示例 3：**
+
+```
+输入：l1 = [], l2 = [0]
+输出：[0]
+```
+
+> **思路一：递归，比较两个列表的第一个元素，将较小的元素作为合并后的第一个元素，然后递归地合并剩余的部分。**
+
+```csharp
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     public int val;
+ *     public ListNode next;
+ *     public ListNode(int val=0, ListNode next=null) {
+ *         this.val = val;
+ *         this.next = next;
+ *     }
+ * }
+ */
+public class Solution {
+    public ListNode MergeTwoLists(ListNode list1, ListNode list2) {
+        if(list1 == null) {
+            return list2;
+        } else if(list2 == null) {
+            return list1;
+        } else if(list1.val < list2.val) {
+            list1.next = MergeTwoLists(list1.next, list2);
+            return list1;
+        } else {
+            list2.next = MergeTwoLists(list1, list2.next);
+            return list2;
+        }
+    }
+}
+```
+
+> **思路二：迭代。**
+
+```csharp
+/**
+ * Definition for singly-linked list.
+ * public class ListNode {
+ *     public int val;
+ *     public ListNode next;
+ *     public ListNode(int val=0, ListNode next=null) {
+ *         this.val = val;
+ *         this.next = next;
+ *     }
+ * }
+ */
+public class Solution {
+    public ListNode MergeTwoLists(ListNode list1, ListNode list2) {
+        ListNode res = new ListNode();
+        ListNode head = res;
+
+        ListNode p1 = list1; ListNode p2 = list2;
+        while(p1 != null && p2 != null) {
+            if(p1.val < p2.val) {
+                res.next = new ListNode(p1.val);
+                res = res.next;
+                p1 = p1.next;
+            } else {
+                res.next = new ListNode(p2.val);
+                res = res.next;
+                p2 = p2.next;
+            }
+        }
+
+        while(p1 != null) {
+            res.next = new ListNode(p1.val); res = res.next;
+            p1 = p1.next;
+        }
+
+        while(p2 != null) {
+            res.next = new ListNode(p2.val); res = res.next;
+            p2 = p2.next;
+        }
+
+        return head.next;
+    }
+}
+```
+
