@@ -5461,3 +5461,273 @@ public class Solution {
 }
 ```
 
+## [92. 反转链表 II](https://leetcode.cn/problems/reverse-linked-list-ii/)
+
+给你单链表的头指针 `head` 和两个整数 `left` 和 `right` ，其中 `left <= right` 。请你反转从位置 `left` 到位置 `right` 的链表节点，返回 **反转后的链表** 。
+
+**示例 1：**
+
+```
+输入：head = [1,2,3,4,5], left = 2, right = 4
+输出：[1,4,3,2,5]
+```
+
+**示例 2：**
+
+```
+输入：head = [5], left = 1, right = 1
+输出：[5]
+```
+
+> **思路一：翻转部分+重新指定连接关系**
+>
+> - **先实现一个反转链表的辅助函数**
+> - **断掉right节点的next，使用辅助函数翻转从left节点到right节点的部分**
+> - **重新指定连接关系：left节点的前节点的next为right节点，left节点的next为right之后的节点**
+
+```csharp
+public class Solution {
+    public ListNode ReverseBetween(ListNode head, int left, int right) {
+        if (head == null || head.next == null || left == right) {
+            return head;
+        }
+
+        // 伪头节点，方便处理 left = 1 的情况
+        ListNode dummy = new ListNode(-1, head);
+        ListNode preLeftNode = dummy;
+
+        // 找到 left 节点的前一个节点
+        for (int i = 1; i < left; i++) {
+            preLeftNode = preLeftNode.next;
+        }
+
+        // 找到 right 节点
+        ListNode rightNode = preLeftNode;
+        for (int i = left; i <= right; i++) {
+            rightNode = rightNode.next;
+        }
+
+        // 断开 right 节点之后的链表
+        ListNode afterRightNode = rightNode.next;
+        rightNode.next = null;
+
+        // 翻转从 left 节点到 right 节点的部分
+        ListNode reversedHead = ReverseList(preLeftNode.next);
+
+        // 将翻转后的链表重新连接到原链表
+        preLeftNode.next.next = afterRightNode; // 原来的 left 节点（现在是翻转后的尾节点）连接到 afterRightNode
+        preLeftNode.next = reversedHead; // preLeftNode 连接到翻转后的头节点
+
+        return dummy.next;
+    }
+
+    // 反转链表
+    private ListNode ReverseList(ListNode head) {
+        ListNode prev = null;
+        ListNode current = head;
+
+        while (current != null) {
+            ListNode nextTemp = current.next;
+            current.next = prev;
+            prev = current;
+            current = nextTemp;
+        }
+
+        return prev; // 返回新的头节点
+    }
+}
+```
+
+> **思路二：与思路一相同，不封装辅助函数**
+
+```csharp
+public class Solution {
+    public ListNode ReverseBetween(ListNode head, int left, int right) {
+        if (head == null || head.next == null || left == right) {
+            return head;
+        }
+
+        // 伪头节点，方便处理 left = 1 的情况
+        ListNode dummy = new ListNode(-1, head);
+        ListNode preLeftNode = dummy;
+
+        // 找到 left 节点的前一个节点
+        for (int i = 1; i < left; i++) {
+            preLeftNode = preLeftNode.next;
+        }
+
+        // 初始化翻转部分的指针
+        ListNode current = preLeftNode.next; // left 节点
+        ListNode prev = null;
+        ListNode next = null;
+
+        // 翻转从 left 到 right 的部分
+        for (int i = left; i <= right; i++) {
+            next = current.next; // 保存下一个节点
+            current.next = prev; // 当前节点指向前一个节点
+            prev = current; // 前一个节点移动到当前节点
+            current = next; // 当前节点移动到下一个节点
+        }
+
+        // 将翻转后的链表重新连接到原链表
+        preLeftNode.next.next = current; // 原来的 left 节点（现在是翻转后的尾节点）连接到 right 节点之后的节点
+        preLeftNode.next = prev; // preLeftNode 连接到翻转后的头节点
+
+        return dummy.next;
+    }
+}
+```
+
+## [25. K 个一组翻转链表](https://leetcode.cn/problems/reverse-nodes-in-k-group/)
+
+给你链表的头节点 `head` ，每 `k` 个节点一组进行翻转，请你返回修改后的链表。
+
+`k` 是一个正整数，它的值小于或等于链表的长度。如果节点总数不是 `k` 的整数倍，那么请将最后剩余的节点保持原有顺序。
+
+你不能只是单纯的改变节点内部的值，而是需要实际进行节点交换。
+
+**示例 1：**
+
+```
+输入：head = [1,2,3,4,5], k = 2
+输出：[2,1,4,3,5]
+```
+
+**示例 2：**
+
+```
+输入：head = [1,2,3,4,5], k = 3
+输出：[3,2,1,4,5]
+```
+
+> **思路一：求余模拟**
+>
+> 1. **遍历链表：**
+>    - **使用指针 `p` 遍历链表，计数器 `count` 记录当前节点位置。**
+> 2. **分组翻转：**
+>    - **当 `count % k == 0` 时，说明当前节点是第 k 个节点，即当前组的尾节点。**
+>      - **断开当前组与下一组的连接，记录下一组的头节点 `nextHead`。**
+>      - **翻转当前组，并将翻转后的组连接到上一组的尾节点 `lastTail`。**
+>      - **更新 `lastTail` 为当前组的原始头节点（翻转后的尾节点），并连接到下一组。**
+>      - **将 `p` 更新为下一组的头节点 `nextHead`，继续遍历。**
+>    - **否则，直接 `p = p.next;`  继续遍历**
+
+```csharp
+public class Solution {
+    public ListNode ReverseKGroup(ListNode head, int k) {
+        if (head == null || head.next == null || k == 1) {
+            return head;
+        }
+
+        ListNode dummy = new ListNode(-1, head);
+        ListNode lastTail = dummy; // 上一组的尾节点
+        ListNode p = head; // 用于遍历的指针
+        int count = 0; // 计数器
+
+        while (p != null) {
+            count++;
+
+            if (count % k == 0) {
+                // 说明 p 是这一组的尾节点，获取下一组的头节点
+                ListNode nextHead = p.next;
+                // 断开连接
+                p.next = null;
+                // 用一个变量记录下当前组原来的头节点
+                ListNode originalHead = lastTail.next;
+                // 翻转当前组
+                ListNode reversedHead = ReverseList(originalHead);
+                // 将翻转后的当前组连接到上一组的后面
+                lastTail.next = reversedHead;
+
+                // 修改 lastTail 为原先的头（现在是尾）
+                lastTail = originalHead;
+                // lastTail 连接到下一组
+                lastTail.next = nextHead;
+
+                // 更新 p 为下一组的头节点
+                p = nextHead;
+            } else {
+                // 继续遍历
+                p = p.next;
+            }
+        }
+
+        return dummy.next;
+    }
+
+    // 辅助函数，翻转链表
+    private ListNode ReverseList(ListNode head) {
+        ListNode prev = null;
+        ListNode current = head;
+
+        while (current != null) {
+            ListNode nextTemp = current.next;
+            current.next = prev;
+            prev = current;
+            current = nextTemp;
+        }
+
+        return prev; // 返回新的头节点
+    }
+}
+```
+
+> **思路二：递归**
+>
+> 1. **递归终止条件：如果链表为空或剩余节点不足k个，不需要翻转，直接返回头结点**
+> 2. **翻转当前组：翻转当前组的前k个节点**
+> 3. **递归处理剩余链表：找到当前组的尾部，递归处理剩余链表并拼在尾部**
+> 4. **返回头结点：最后返回翻转后的链表头结点**
+
+```csharp
+public class Solution {
+    public ListNode ReverseKGroup(ListNode head, int k) {
+        if(head == null || head.next == null || k == 1) {
+            return head;
+        }
+
+        // 检查剩余节点是否足够k个
+        ListNode current = head;
+        int count = 0;
+        while(current != null && count < k)
+        {
+            current = current.next;
+            count ++;
+        }
+
+        // 如果剩余节点不足k个，直接返回当前头节点
+        if(count < k)
+        {
+            return head;
+        }
+
+        /** 此时current已经是下一组的头结点了 */
+
+        // 翻转当前组的前k个节点
+        ListNode reversedHead = ReverseList(head, k);
+        // 递归处理剩余链表，把结果连接到当前组的尾部（此时head是当前组的尾部）
+        head.next = ReverseKGroup(current, k);
+
+        return reversedHead;
+    }
+
+    // 辅助函数：翻转链表的前k个节点
+    private ListNode ReverseList(ListNode head, int k)
+    {
+        ListNode prev = null;
+        ListNode current = head;
+
+        while(k > 0)
+        {
+            ListNode tempNext = current.next;
+            current.next = prev;
+            prev = current;
+            current = tempNext;
+            k--;
+        }
+
+        return prev;
+    }
+}
+```
+
