@@ -5731,3 +5731,283 @@ public class Solution {
 }
 ```
 
+## [19. 删除链表的倒数第 N 个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+给你一个链表，删除链表的倒数第 `n` 个结点，并且返回链表的头结点。
+
+**示例 1：**[]()
+
+```
+输入：head = [1,2,3,4,5], n = 2
+输出：[1,2,3,5]
+```
+
+**示例 2：**
+
+```
+输入：head = [1], n = 1
+输出：[]
+```
+
+**示例 3：**
+
+```
+输入：head = [1,2], n = 1
+输出：[1]
+```
+
+> **思路：双指针**
+>
+> 1. **初始化两个指针 `deleteNode` 和 `lastNode`，都指向虚拟头节点 `dummy`。**
+> 2. **先让 `lastNode` 移动 `n` 步，然后同时移动 `deleteNode` 和 `lastNode`，直到 `lastNode` 到达链表末尾。**
+> 3. **此时 `deleteNode` 指向倒数第 `n+1` 个节点，直接修改 `deleteNode.next` 即可删除倒数第 `n` 个节点。**
+
+```csharp
+public class Solution {
+    public ListNode RemoveNthFromEnd(ListNode head, int n) {
+        if (head == null) {
+            return head;
+        }
+        ListNode dummy = new ListNode(-1, head);
+        ListNode deleteNode = dummy; // 需要删除的节点
+        ListNode lastNode = dummy;
+        // lastNode移动到head之后的第n个节点
+        for(int i=0; i<n; i++) {
+            lastNode = lastNode.next;
+        }
+
+        // deleteNode和LastNode一起移动，直到deleteNode位于最后一个节点
+        while(lastNode.next != null) {
+            deleteNode = deleteNode.next;
+            lastNode = lastNode.next;
+        }
+
+        // 删除deleteNode之后的节点
+        deleteNode.next = deleteNode.next.next;
+
+        return dummy.next;
+    }
+}
+```
+
+## [82. 删除排序链表中的重复元素 II](https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/)
+
+给定一个已排序的链表的头 `head` ， *删除原始链表中所有重复数字的节点，只留下不同的数字* 。返回 *已排序的链表* 。
+
+```
+输入：head = [1,2,3,3,4,4,5]
+输出：[1,2,5]
+```
+
+```
+输入：head = [1,1,1,2,3]
+输出：[2,3]
+```
+
+> **思路：双指针模拟法**
+>
+> 1. **初始化两个指针 `prevNode` 和 `curNode`，分别指向虚拟头节点 `dummy`和头结点`head`。**
+> 2. **进入`while`循环，检查当前节点和下一个节点的值是否相同**
+>    1. **若相同，需要删除所有重复节点（`curNode`跳到之后第一个不重复的节点），`prevNode`连接到`curNode`。**
+>    2. **若不同，`preNode`和`curNode`都右移一个节点。**
+
+```csharp
+public class Solution {
+    public ListNode DeleteDuplicates(ListNode head) {
+        if (head == null || head.next == null) {
+            return head;
+        }
+        /** 链表至少有两个节点 */
+
+        ListNode dummy = new ListNode(-101, head);
+        ListNode prevNode = dummy;
+        ListNode curNode = head; 
+        
+
+        while(curNode != null) {
+            if(curNode.next != null && curNode.val == curNode.next.val) {
+                // 如果当前节点和下一个节点值相同，需要删除所有重复节点
+                int duplicateVal = curNode.val;
+                while(curNode != null && curNode.val == duplicateVal) {
+                    curNode = curNode.next;
+                }
+                // 跳过所有重复节点
+                prevNode.next = curNode;
+            } else {
+                // 否则，两个指针右移动
+                prevNode = prevNode.next; curNode = curNode.next;
+            }
+        }
+
+        return dummy.next;
+    }
+}
+```
+
+## [61. 旋转链表](https://leetcode.cn/problems/rotate-list/)
+
+给你一个链表的头节点 `head` ，旋转链表，将链表每个节点向右移动 `k` 个位置。
+
+**示例 1：**
+
+```
+输入：head = [1,2,3,4,5], k = 2
+输出：[4,5,1,2,3]
+```
+
+**示例 2：**
+
+```
+输入：head = [0,1,2], k = 4
+输出：[2,0,1]
+```
+
+> **思路：双指针**
+>
+> 1. **找到链表的长度 `len`，并计算实际需要旋转的步数 `k % len`（避免 `k` 大于链表长度）。**
+> 2. **使用双指针，`newTail` 先移动 `k` 步，然后 `oldTail` 和 `newTail` 同时移动，直到 `newTail` 到达链表末尾。**
+> 3. **将链表从 `oldTail` 处断开，将后半部分拼接到链表头部，形成旋转后的链表。**
+
+```csharp
+public class Solution {
+    public ListNode RotateRight(ListNode head, int k) {
+        if (head == null || head.next == null || k == 0) {
+            return head;
+        }
+
+        ListNode oldTail = head; // 原链表的尾部节点
+        ListNode newTail = head; // 新链表的尾部节点
+
+        int len = 1; // 链表长度
+        while (oldTail.next != null) {
+            oldTail = oldTail.next;
+            len++;
+        }
+
+        // 计算实际需要移动的步数
+        k = k % len;
+        if (k == 0) {
+            return head; // 如果 k 是链表长度的倍数，直接返回原链表
+        }
+
+        // newTail 先移动 k 步
+        for (int i = 0; i < k; i++) {
+            newTail = newTail.next;
+        }
+
+        // oldTail 和 newTail 同时移动，直到 newTail 到达链表末尾
+        oldTail = head;
+        while (newTail.next != null) {
+            oldTail = oldTail.next;
+            newTail = newTail.next;
+        }
+
+        // 把从head到oldTail的部分拼接到newTail之后
+        ListNode res = oldTail.next;
+        oldTail.next = null;
+        newTail.next = head;
+
+        return res;
+    }
+}
+```
+
+## [86. 分隔链表](https://leetcode.cn/problems/partition-list/)
+
+给你一个链表的头节点 `head` 和一个特定值 `x` ，请你对链表进行分隔，使得所有 **小于** `x` 的节点都出现在 **大于或等于** `x` 的节点之前。
+
+你应当 **保留** 两个分区中每个节点的初始相对位置。
+
+**示例 1：**
+
+```
+输入：head = [1,4,3,2,5,2], x = 3
+输出：[1,2,2,4,3,5]
+```
+
+**示例 2：**
+
+```
+输入：head = [2,1], x = 2
+输出：[1,2]
+```
+
+> **思路一：模拟法**
+>
+> 1. **找到尾部节点`tail`，顺便统计链表长度`len`**
+> 2. **用指针遍历链表每个元素**
+>    1. **如果发现元素值比`x`大，就把节点拼接到`tail`后面，并后移`tail`，再把`tail.next`置空**
+>    2. **否则移动指针**
+
+```csharp
+public class Solution {
+    public ListNode Partition(ListNode head, int x) {
+        if(head == null || head.next == null) {
+            return head;
+        }
+
+        ListNode tail = head; // 找到尾部
+        int len = 1; // 记录链表长度
+        while(tail.next != null) {
+            tail = tail.next;
+            len ++;
+        }
+
+        ListNode dummy = new ListNode(-1, head);
+        ListNode p = dummy;
+        // 遍历链表每个元素
+        for(int i=0; i<len; i++) {
+            if(p.next != null && p.next.val >= x) {
+                // 连接到尾巴
+                tail.next = p.next;
+                // 跳过该节点
+                p.next = p.next.next;
+                
+                // 断开tail后面的节点连接
+                tail = tail.next; tail.next = null;
+            } else {
+                if (p.next != null) {
+                    p = p.next;
+                }
+            }
+        }
+
+        return dummy.next;
+    }
+}
+```
+
+> **思路二：双链表拼接法，创建两个伪头结点 `sDummy` 和 `bDummy`，分别用于构建小于 `x` 和大于等于 `x` 的链表。遍历原链表时，根据节点值将其连接到对应的链表中，最后将两个链表拼接起来并返回结果。**
+
+```csharp
+public class Solution {
+    public ListNode Partition(ListNode head, int x) {
+        if(head == null || head.next == null) {
+            return head;
+        }
+
+        ListNode sDummy = new ListNode(-1); // 值比x小的节点构成的链表的伪头结点
+        ListNode bDummy = new ListNode(-1); // 值比x大的节点构成的链表的伪头结点
+
+        ListNode pointS = sDummy; ListNode pointB = bDummy;
+        while(head != null) {
+            if(head.val < x) {
+                pointS.next = head;
+                pointS = pointS.next;
+            } else {
+                pointB.next = head;
+                pointB = pointB.next;
+            }
+
+            head = head.next;
+        }
+
+        // 拼接两个链表
+        pointS.next = bDummy.next;
+        pointB.next = null;
+
+        return sDummy.next;
+    }
+}
+```
+
