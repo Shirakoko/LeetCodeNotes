@@ -6011,3 +6011,197 @@ public class Solution {
 }
 ```
 
+## [146. LRU 缓存](https://leetcode.cn/problems/lru-cache/)
+
+请你设计并实现一个满足LRU (最近最少使用) 缓存约束的数据结构。
+
+实现 `LRUCache` 类：
+
+- `LRUCache(int capacity)` 以 **正整数** 作为容量 `capacity` 初始化 LRU 缓存
+- `int get(int key)` 如果关键字 `key` 存在于缓存中，则返回关键字的值，否则返回 `-1` 。
+- `void put(int key, int value)` 如果关键字 `key` 已经存在，则变更其数据值 `value` ；如果不存在，则向缓存中插入该组 `key-value` 。如果插入操作导致关键字数量超过 `capacity` ，则应该 **逐出** 最久未使用的关键字。
+
+函数 `get` 和 `put` 必须以 `O(1)` 的平均时间复杂度运行。
+
+**示例：**
+
+```
+输入
+["LRUCache", "put", "put", "get", "put", "get", "put", "get", "get", "get"]
+[[2], [1, 1], [2, 2], [1], [3, 3], [2], [4, 4], [1], [3], [4]]
+输出
+[null, null, null, 1, null, -1, null, -1, 3, 4]
+
+解释
+LRUCache lRUCache = new LRUCache(2);
+lRUCache.put(1, 1); // 缓存是 {1=1}
+lRUCache.put(2, 2); // 缓存是 {1=1, 2=2}
+lRUCache.get(1);    // 返回 1
+lRUCache.put(3, 3); // 该操作会使得关键字 2 作废，缓存是 {1=1, 3=3}
+lRUCache.get(2);    // 返回 -1 (未找到)
+lRUCache.put(4, 4); // 该操作会使得关键字 1 作废，缓存是 {4=4, 3=3}
+lRUCache.get(1);    // 返回 -1 (未找到)
+lRUCache.get(3);    // 返回 3
+lRUCache.get(4);    // 返回 4
+```
+
+> **思路：有哨兵节点的双向循环链表**
+>
+> 1. **双向循环链表：用于维护缓存中数据的访问顺序，最近访问的节点放在链表头部，最久未访问的节点放在链表尾部。**
+> 2. **哨兵节点：简化链表操作，避免处理头尾节点的特殊情况。**
+> 3. **哈希表：通过`keyToNode`字典快速查找节点，确保`Get`和`Put`操作的时间复杂度为O(1)。**
+> 4. **容量控制：当缓存超过容量时，移除链表尾部的节点（最久未使用的节点）。**
+
+```csharp
+public class LRUCache {
+    // 双向循环链表
+    public class Node {
+        public int key;
+        public int value;
+        public Node prev;
+        public Node next;
+
+        public Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private int capacity; // 容量
+    private Node dummy = new Node(0, 0); // 哨兵节点
+    private Dictionary<int, Node> keyToNode = new Dictionary<int, Node>(); // key到节点的映射
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        dummy.prev = dummy;
+        dummy.next = dummy;
+    }
+    
+    public int Get(int key) {
+        Node node = GetNode(key);
+        return node == null ? -1 : node.value;
+    }
+    
+    public void Put(int key, int value) {
+        Node node = GetNode(key);
+
+        // 如果节点已经存在，更新值
+        if(node != null) {
+            node.value = value;
+            return;
+        }
+
+        // 否则尝试插入一个新的节点
+        node = new Node(key, value);
+        keyToNode.Add(key, node);
+        PushFront(node);
+
+        // 检查添加后是否超过容量
+        if(keyToNode.Count > capacity) {
+            // 删除最后一个节点
+            Node lastNode = dummy.prev;
+            keyToNode.Remove(lastNode.key);
+            Remove(lastNode);
+        }
+    }
+
+    // 取出一个节并放到最上面
+    private Node GetNode(int key) {
+        if(!keyToNode.ContainsKey(key)) {
+            return null;
+        }
+
+        Node node = keyToNode[key];
+        Remove(node); // 取出节点
+        PushFront(node); // 放到最上面
+
+        return node;
+    }
+
+    // 从双向链表中移除一个节点
+    private void Remove(Node x)
+    {
+        x.prev.next = x.next;
+        x.next.prev = x.prev;
+    }
+
+    // 在链表头添加一个节点
+    private void PushFront(Node x)
+    {
+        x.prev = dummy;
+        x.next = dummy.next;
+        x.prev.next = x;
+        x.next.prev = x;
+    }
+}
+```
+
+## [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+
+给定一个二叉树 `root` ，返回其最大深度。
+
+二叉树的 **最大深度** 是指从根节点到最远叶子节点的最长路径上的节点数。
+
+**示例 1：**
+
+```
+输入：root = [3,9,20,null,null,15,7]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：root = [1,null,2]
+输出：2
+```
+
+> **思路一：递归式前序遍历实现DFS**
+
+```csharp
+public class Solution {
+    public int MaxDepth(TreeNode root) {
+        // 退出条件
+        if(root == null) {
+            return 0;
+        }
+        // 取出左右两子树的最大深度 + 1
+        return Math.Max(MaxDepth(root.left), MaxDepth(root.right)) + 1;
+    }
+}
+```
+
+> **思路二：迭代式层序遍历实现BFS**
+
+```csharp
+public class Solution {
+    public int MaxDepth(TreeNode root) {
+        if(root == null) {
+            return 0;
+        }
+
+        int layer = 0;
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root); // 根节点入队
+
+        while(queue.Count > 0) {
+            int layerSize = queue.Count; // 记录当前层的节点数量
+            for(int i=0; i<layerSize; i++) {
+                TreeNode curNode = queue.Dequeue(); // 取出节点
+                // 左右节点入队
+                if(curNode.left != null) {
+                    queue.Enqueue(curNode.left);
+                }
+                if(curNode.right != null) {
+                    queue.Enqueue(curNode.right);
+                }
+            }
+            
+            layer ++; // 层数增加
+        }
+
+        return layer;
+    }
+}
+```
+
