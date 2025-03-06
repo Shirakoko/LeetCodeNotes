@@ -6386,3 +6386,250 @@ public class Solution {
 }
 ```
 
+## [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)
+
+给定两个整数数组 `preorder` 和 `inorder` ，其中 `preorder` 是二叉树的**先序遍历**， `inorder` 是同一棵树的**中序遍历**，请构造二叉树并返回其根节点。
+
+**示例 1:**
+
+```
+输入: preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]
+输出: [3,9,20,null,null,15,7]
+```
+
+**示例 2:**
+
+```
+输入: preorder = [-1], inorder = [-1]
+输出: [-1]
+```
+
+> **思路：寻根分左右+递归构建**
+>
+> 1. **前序遍历的第一个节点是当前子树的根节点。**
+> 2. **在中序遍历中找到根节点的位置，根节点左边是左子树，右边是右子树。**
+> 3. **递归构建左子树和右子树：左子树的前序遍历范围是 `preStart + 1` 到 `preStart + leftSize`，中序遍历范围是 `inStart` 到 `inRootIndex - 1`；右子树的前序遍历范围是 `preStart + leftSize + 1` 到 `preEnd`，中序遍历范围是 `inRootIndex + 1` 到 `inEnd`。**
+
+```csharp
+public class Solution {
+    public TreeNode BuildTree(int[] preorder, int[] inorder) {
+        // 使用一个哈希表来存储inorder中值到索引的映射
+        Dictionary<int, int> inorderMap = new Dictionary<int, int>();
+        for(int i=0; i<inorder.Length; i++) {
+            inorderMap.Add(inorder[i], i);
+        }
+
+        return BuildTreeHelper(preorder, 0, preorder.Length-1, inorder, 0, inorder.Length - 1, inorderMap);
+    }
+
+    // 辅助函数
+    private TreeNode BuildTreeHelper(int[] preorder, int preStart, int preEnd, int[] inorder, int inStart, int inEnd, 
+        Dictionary<int, int> inorderMap) {
+        // 递归退出条件
+        if(inStart > inEnd || preStart > preEnd) {
+            return null;
+        }
+
+        // 获取根节点的值，构建根节点
+        int rootVal = preorder[preStart];
+        TreeNode root = new TreeNode(rootVal);
+
+        // 在中序遍历中找到根节点的位置
+        int inRootIndex = inorderMap[rootVal];
+
+        // 左子树的节点数量
+        int leftSize = inRootIndex - inStart;
+
+        // 递归构建左子树
+        root.left = BuildTreeHelper(preorder, preStart + 1, preStart + leftSize, inorder, inStart, inRootIndex - 1, inorderMap);
+        // 递归构建右子树
+        root.right = BuildTreeHelper(preorder, preStart + leftSize + 1, preEnd, inorder, inRootIndex + 1, inEnd, inorderMap);
+
+        return root;
+    }
+}
+```
+
+## [106. 从中序与后序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-inorder-and-postorder-traversal/)
+
+给定两个整数数组 `inorder` 和 `postorder` ，其中 `inorder` 是二叉树的中序遍历， `postorder` 是同一棵树的后序遍历，请你构造并返回这颗 *二叉树* 。
+
+**示例 1:**
+
+```
+输入：inorder = [9,3,15,20,7], postorder = [9,15,7,20,3]
+输出：[3,9,20,null,null,15,7]
+```
+
+**示例 2:**
+
+```
+输入：inorder = [-1], postorder = [-1]
+输出：[-1]
+```
+
+> **思路：寻根分左右+递归构建**
+>
+> 1. **后序遍历的最后一个节点是当前子树的根节点。**
+> 2. **在中序遍历中找到根节点的位置，根节点左边是左子树，右边是右子树。**
+> 3. **递归构建左子树和右子树：左子树的后序遍历范围是 `postStart` 到 `postStart + leftSize - 1`，中序遍历范围是 `inStart` 到 `inRootIndex - 1`；右子树的后序遍历范围是 `postStart + leftSize` 到 `postEnd - 1`，中序遍历范围是 `inRootIndex + 1` 到 `inEnd`。**
+
+```csharp
+public class Solution {
+    public TreeNode BuildTree(int[] inorder, int[] postorder) {
+        Dictionary<int, int> inorderMap = new Dictionary<int, int>();
+        for(int i=0; i<inorder.Length; i++) {
+            inorderMap.Add(inorder[i], i);
+        }
+
+        return BuildTreeHelper(inorder, 0, inorder.Length - 1, postorder, 0, postorder.Length - 1, inorderMap);
+    }
+
+    // 辅助函数
+    private TreeNode BuildTreeHelper(int[] inorder, int inStart, int inEnd, int[] postorder, int postStart, int postEnd, Dictionary<int, int> inorderMap) {
+        if(inStart > inEnd || postStart > postEnd) {
+            return null;
+        }
+
+        // 后序遍历的最后一个元素是根节点
+        int rootVal = postorder[postEnd];
+        // 构建根节点
+        TreeNode root = new TreeNode(rootVal);
+
+        // 得到根节点在中序遍历数组中的索引
+        int inRootIndex = inorderMap[rootVal];
+
+        // 计算左子树节点个数
+        int leftSize = inRootIndex - inStart;
+
+        // 递归调用构建左子树
+        root.left = BuildTreeHelper(inorder, inStart, inRootIndex - 1, postorder, postStart, postStart + leftSize - 1, inorderMap);
+        // 递归调用构建右子树
+        root.right = BuildTreeHelper(inorder, inRootIndex + 1, inEnd, postorder, postStart + leftSize, postEnd - 1, inorderMap);
+
+        return root;
+    }
+}
+```
+
+## [117. 填充每个节点的下一个右侧节点指针 II](https://leetcode.cn/problems/populating-next-right-pointers-in-each-node-ii/)
+
+给定一个二叉树：
+
+```
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+```
+
+填充它的每个 next 指针，让这个指针指向其下一个右侧节点。如果找不到下一个右侧节点，则将 next 指针设置为 `NULL` 。
+
+初始状态下，所有 next 指针都被设置为 `NULL` 。
+
+**示例 1：**
+
+```
+输入：root = [1,2,3,4,5,null,7]
+输出：[1,#,2,3,#,4,5,7,#]
+解释：给定二叉树如图 A 所示，你的函数应该填充它的每个 next 指针，以指向其下一个右侧节点，如图 B 所示。序列化输出按层序遍历顺序（由 next 指针连接），'#' 表示每层的末尾。
+```
+
+**示例 2：**
+
+```
+输入：root = []
+输出：[]
+```
+
+> **思路一：层序遍历**
+>
+> 1. **BFS层序遍历：使用队列进行广度优先搜索。**
+> 2. **记录每层节点数：在每一层开始时，记录当前层的节点数量，确保只处理当前层的节点。**
+> 3. **连接next指针：遍历当前层的节点时，将每个节点的`next`指针指向队列中的下一个节点（即当前层的下一个节点），最后一个节点的`next`指针保持为`null`。**
+> 4. **子节点入队：将当前节点的左右子节点加入队列，以便继续遍历下一层。**
+> 5. **返回根节点：遍历完成后，返回修改后的根节点。**
+
+```csharp
+public class Solution {
+    public Node Connect(Node root) {
+        /** BFS层序遍历 */
+        if(root == null) {
+            return null;
+        }
+
+        Queue<Node> queue = new Queue<Node>();
+        queue.Enqueue(root);
+        int layerCount = 0; // 当前层数的节点个数
+
+        while(queue.Count > 0) {
+            layerCount = queue.Count; // 记录当前层数的节点个数
+            for(int i=0; i<layerCount; i++) {
+                // 出队
+                Node curNode = queue.Dequeue(); 
+                // next指针连接下一个元素（当前层最后一个元素不操作）
+                if(i < layerCount - 1) curNode.next = queue.Peek();
+                // 左右子节点入队
+                if(curNode.left != null) {
+                    queue.Enqueue(curNode.left);
+                }
+                if(curNode.right != null) {
+                    queue.Enqueue(curNode.right);
+                }
+            }    
+        }
+
+        return root;
+    }
+}
+```
+
+> **思路二：两个while循环，利用当前层的 `next` 指针来连接下一层**
+>
+> 1. **逐层遍历：从根节点开始，利用当前层的 `next` 指针从左到右遍历每一层。**
+> 2. **连接下一层：在遍历当前层时，将下一层的节点通过 `next` 指针连接起来。**
+> 3. **动态找下一层起点：在遍历过程中，动态找到下一层的最左节点，作为下一层遍历的起点。**
+
+```csharp
+public class Solution {
+    public Node Connect(Node root) {
+        /** 利用已建立的next指针，遍历当前层并连接下一层 */
+        if(root == null) {
+            return null;
+        }
+
+        Node leftmost = root; // 当前层的最左节点
+        while(leftmost != null) {
+            Node curr = leftmost; // 当前层的遍历指针
+            Node prev = null; // 下一层遍历的前一个节点
+            leftmost = null; // 重置 leftmost
+            
+            // 遍历当前层，同时连接下一层
+            while(curr != null) {
+                if(curr.left != null) {
+                    if(prev != null) {
+                        prev.next = curr.left; // 连接左子节点
+                    } else {
+                        leftmost = curr.left; // 移动到下一层的最左节点（位于左子树）
+                    }
+                    prev = curr.left; // 移动下一层的遍历指针
+                }
+                if(curr.right != null) {
+                    if(prev != null) {
+                        prev.next = curr.right; // 连接右子节点
+                    } else {
+                        leftmost = curr.right; // 找到下一层的最左节点
+                    }
+                    prev = curr.right; // 移动下一层的遍历指针
+                }
+                curr = curr.next; // 移动到当前层的下一个节点
+            }
+        }
+
+        return root;
+    }
+}
+```
+
