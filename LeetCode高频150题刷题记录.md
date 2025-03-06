@@ -6205,3 +6205,184 @@ public class Solution {
 }
 ```
 
+## [100. 相同的树](https://leetcode.cn/problems/same-tree/)
+
+给你两棵二叉树的根节点 `p` 和 `q` ，编写一个函数来检验这两棵树是否相同。
+
+如果两个树在结构上相同，并且节点具有相同的值，则认为它们是相同的。
+
+**示例 1：**
+
+```
+输入：p = [1,2,3], q = [1,2,3]
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：p = [1,2], q = [1,null,2]
+输出：false
+```
+
+**示例 3：**
+
+```
+输入：p = [1,2,1], q = [1,1,2]
+输出：false
+```
+
+> **思路：递归式DFS**
+
+```csharp
+public class Solution {
+    public bool IsSameTree(TreeNode p, TreeNode q) {
+        /** 递归式DFS */
+        // 退出条件
+        if(p == null && q == null) {
+            // 都为空
+            return true;
+        } else if (p == null || q == null){
+            // 一个为空一个不为空
+            return false;
+        } else if(p.val != q.val) {
+            // 两个都不为空且值不相等
+            return false;
+        }
+
+        // 递归比较左右子树是否相同
+        return IsSameTree(p.left, q.left) && IsSameTree(p.right, q.right);
+    }
+}
+```
+
+## [226. 翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/)
+
+给你一棵二叉树的根节点 `root` ，翻转这棵二叉树，并返回其根节点。
+
+**示例 1：**
+
+```
+输入：root = [4,2,7,1,3,6,9]
+输出：[4,7,2,9,6,3,1]
+```
+
+**示例 2：**
+
+```
+输入：root = [2,1,3]
+输出：[2,3,1]
+```
+
+**示例 3：**
+
+```
+输入：root = []
+输出：[]
+```
+
+> **思路一：递归式DFS**
+
+```csharp
+public class Solution {
+    public TreeNode InvertTree(TreeNode root) {
+        // 退出条件
+        if (root == null) {
+            return null;
+        }
+
+        // 交换左右子树
+        TreeNode temp = root.left;
+        root.left = root.right;
+        root.right = temp;
+
+        // 递归调用
+        InvertTree(root.left);
+        InvertTree(root.right);
+
+        return root;
+    }
+}
+```
+
+> **思路二：迭代式BFS**
+
+```csharp
+public class Solution {
+    public TreeNode InvertTree(TreeNode root) {
+        if(root == null) {
+            return null;
+        }
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+
+        while(queue.Count > 0) {
+            TreeNode node = queue.Dequeue();
+            // 交换取出节点的左右子节点
+            TreeNode temp = node.left;
+            node.left = node.right;
+            node.right = temp;
+            
+            // 子节点入队
+            if(node.left != null) {
+                queue.Enqueue(node.left);
+            }
+            if(node.right != null) {
+                queue.Enqueue(node.right);
+            }
+        }
+
+        return root;
+    }
+}
+```
+
+## [101. 对称二叉树](https://leetcode.cn/problems/symmetric-tree/)
+
+给你一个二叉树的根节点 `root` ， 检查它是否轴对称。
+
+**示例 1：**
+
+```
+输入：root = [1,2,2,3,4,4,3]
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：root = [1,2,2,null,3,null,3]
+输出：false
+```
+
+> **思路：辅助函数+递归式DFS**
+
+```csharp
+public class Solution {
+    public bool IsSymmetric(TreeNode root) {
+        if(root == null) {
+            return true;
+        }
+
+        return IsTwoSymmetric(root.left, root.right);
+    }
+
+    // 辅助函数：判断两颗树是否对称
+    private bool IsTwoSymmetric(TreeNode root1, TreeNode root2) {
+        if(root1 == null && root2 == null) {
+            // 都为空
+            return true;
+        } else if(root1 == null || root2 == null) {
+            // 有一个为空
+            return false;
+        } else if(root1.val != root2.val) {
+            // 都不为空但值不相等
+            return false;
+        }
+
+        // 两个根都不为空且值相等，递归调用
+        return IsTwoSymmetric(root1.left, root2.right) && IsTwoSymmetric(root1.right, root2.left);
+    }
+}
+```
+
