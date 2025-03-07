@@ -6633,3 +6633,202 @@ public class Solution {
 }
 ```
 
+## [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+
+给你二叉树的根结点 `root` ，请你将它展开为一个单链表：
+
+- 展开后的单链表应该同样使用 `TreeNode` ，其中 `right` 子指针指向链表中下一个结点，而左子指针始终为 `null` 。
+- 展开后的单链表应该与二叉树 [**先序遍历**](https://baike.baidu.com/item/先序遍历/6442839?fr=aladdin) 顺序相同。
+
+**示例 1：**
+
+```
+输入：root = [1,2,5,3,4,null,6]
+输出：[1,null,2,null,3,null,4,null,5,null,6]
+```
+
+**示例 2：**
+
+```
+输入：root = []
+输出：[]
+```
+
+**示例 3：**
+
+```
+输入：root = [0]
+输出：[0]
+```
+
+> **思路一：迭代法，每次从栈中弹出一个节点，将其右子节点和左子节点依次入栈，然后将上一个访问的节点的右指针指向当前节点，同时清空左指针，最终将二叉树展开为单向链表。**
+
+```csharp
+public class Solution {
+    public void Flatten(TreeNode root) {
+        if(root == null) {
+            return;
+        }
+        
+        Stack<TreeNode> stack = new Stack<TreeNode>();
+        stack.Push(root);
+        TreeNode prevNode = null; // 上一个访问的节点
+
+        while(stack.Count > 0) {
+            TreeNode node = stack.Pop();
+            if(prevNode != null) {
+                prevNode.right = node; prevNode.left = null;
+            }
+            prevNode = node;
+
+            // 右子节点入栈
+            if(node.right != null) {
+                stack.Push(node.right);
+            }
+
+            // 左子节点入栈
+            if(node.left != null) {
+                stack.Push(node.left);
+            }
+        }
+    }
+}
+```
+
+> **思路二：Morris遍历**
+>
+> 1. **找到左子树的最右节点：对于当前节点 `cur`，如果它有左子树，则找到左子树的最右节点（即前驱节点）。**
+> 2. **将右子树接到前驱节点：将当前节点的右子树接到前驱节点的右指针上。**
+> 3. **移动子树并清空左指针：将左子树移到右子树的位置，同时清空左指针。**
+> 4. **移动到下一个节点：继续处理右子节点，直到所有节点处理完毕。**
+
+```csharp
+public class Solution {
+    public void Flatten(TreeNode root) {
+        TreeNode cur = root;
+        while(cur != null) {
+            if(cur.left != null) {
+                // leftTree是左子树
+                TreeNode leftTree = cur.left;
+                // prev是左子树中最右边的节点
+                TreeNode prev = leftTree;
+                while(prev.right != null) {
+                    prev = prev.right;
+                }
+                // 左子树中最右边的节点的右节点连接到根的右子树
+                prev.right = cur.right;
+                cur.left = null; cur.right = leftTree;
+            }
+            cur = cur.right;
+        }
+    }
+}
+```
+
+## [112. 路径总和](https://leetcode.cn/problems/path-sum/)
+
+给你二叉树的根节点 `root` 和一个表示目标和的整数 `targetSum` 。判断该树中是否存在 **根节点到叶子节点** 的路径，这条路径上所有节点值相加等于目标和 `targetSum` 。如果存在，返回 `true` ；否则，返回 `false` 。
+
+**叶子节点** 是指没有子节点的节点。
+
+**示例 1：**
+
+```
+输入：root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22
+输出：true
+解释：等于目标和的根节点到叶节点路径如上图所示。
+```
+
+**示例 2：**
+
+```
+输入：root = [1,2,3], targetSum = 5
+输出：false
+解释：树中存在两条根节点到叶子节点的路径：
+(1 --> 2): 和为 3
+(1 --> 3): 和为 4
+不存在 sum = 5 的根节点到叶子节点的路径。
+```
+
+**示例 3：**
+
+```
+输入：root = [], targetSum = 0
+输出：false
+解释：由于树是空的，所以不存在根节点到叶子节点的路径。
+```
+
+> **思路一：递归深度优先搜索**
+>
+> 1. **递归退出条件：如果当前节点是叶子节点（无左右子节点），则判断节点值是否等于剩余的 `targetSum`。**
+> 2. **递归遍历左右子树：从当前节点出发，递归检查左子树和右子树，同时更新 `targetSum` 为 `targetSum - 当前节点值`。**
+> 3. **返回结果：如果左子树或右子树任一存在满足条件的路径，则返回 `true`，否则返回 `false`。**
+
+```csharp
+public class Solution {
+    public bool HasPathSum(TreeNode root, int targetSum) {
+        if(root == null) {
+            return false;
+        }
+        /** 递归DFS */
+        // 递归退出条件
+        if(root.left == null && root.right == null) {
+            return root.val == targetSum;
+        }
+        // 递归遍历左右子树
+        int newSum = targetSum - root.val;
+        return HasPathSum(root.left, newSum) || HasPathSum(root.right, newSum);
+    }
+}
+```
+
+> **思路二：广度优先搜索+双队列**
+>
+> 1. **使用两个队列：一个队列存储节点，用于层序遍历；另一个队列存储从根节点到当前节点的路径和。**
+> 2. **层序遍历：从根节点开始，依次处理每个节点，将其左右子节点加入队列，并更新路径和。**
+> 3. **判断叶子节点：如果当前节点是叶子节点，且路径和等于 `targetSum`，则返回 `true`。**
+> 4. **遍历结束：如果遍历完所有节点仍未找到满足条件的路径，则返回 `false`。**
+
+```csharp
+public class Solution {
+    public bool HasPathSum(TreeNode root, int targetSum) {
+        if (root == null) {
+            return false;
+        }
+
+        // 双队列：一个存储节点，一个存储路径和
+        Queue<TreeNode> nodeQueue = new Queue<TreeNode>();
+        Queue<int> sumQueue = new Queue<int>();
+
+        // 初始化
+        nodeQueue.Enqueue(root);
+        sumQueue.Enqueue(root.val);
+
+        while (nodeQueue.Count > 0) {
+            TreeNode curNode = nodeQueue.Dequeue();
+            int curSum = sumQueue.Dequeue();
+
+            // 如果是叶子节点且路径和等于目标值，返回true
+            if (curNode.left == null && curNode.right == null && curSum == targetSum) {
+                return true;
+            }
+
+            // 处理左子节点
+            if (curNode.left != null) {
+                nodeQueue.Enqueue(curNode.left);
+                sumQueue.Enqueue(curSum + curNode.left.val);
+            }
+
+            // 处理右子节点
+            if (curNode.right != null) {
+                nodeQueue.Enqueue(curNode.right);
+                sumQueue.Enqueue(curSum + curNode.right.val);
+            }
+        }
+
+        // 遍历结束未找到满足条件的路径
+        return false;
+    }
+}
+```
+
