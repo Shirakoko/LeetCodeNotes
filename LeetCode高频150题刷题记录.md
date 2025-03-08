@@ -6832,3 +6832,170 @@ public class Solution {
 }
 ```
 
+## [129. 求根节点到叶节点数字之和](https://leetcode.cn/problems/sum-root-to-leaf-numbers/)
+
+给你一个二叉树的根节点 `root` ，树中每个节点都存放有一个 `0` 到 `9` 之间的数字。
+
+每条从根节点到叶节点的路径都代表一个数字：
+
+- 例如，从根节点到叶节点的路径 `1 -> 2 -> 3` 表示数字 `123` 。
+
+计算从根节点到叶节点生成的 **所有数字之和** 。
+
+**叶节点** 是指没有子节点的节点。
+
+**示例 1：**
+
+```
+输入：root = [1,2,3]
+输出：25
+解释：
+从根到叶子节点路径 1->2 代表数字 12
+从根到叶子节点路径 1->3 代表数字 13
+因此，数字总和 = 12 + 13 = 25
+```
+
+**示例 2：**
+
+```
+输入：root = [4,9,0,5,1]
+输出：1026
+解释：
+从根到叶子节点路径 4->9->5 代表数字 495
+从根到叶子节点路径 4->9->1 代表数字 491
+从根到叶子节点路径 4->0 代表数字 40
+因此，数字总和 = 495 + 491 + 40 = 1026
+```
+
+> **思路一：BFS + 双队列，一个存储当前节点，另一个存储从根节点到当前节点的路径和；每当遍历到一个叶子节点时，将该路径和累加到总和中。**
+
+```csharp
+public class Solution {
+    public int SumNumbers(TreeNode root) {
+        if(root == null) {
+            return 0;
+        }
+        /** BFS+双队列 */
+        Queue<TreeNode> nodeQueue = new Queue<TreeNode>(); // 节点队列
+        Queue<int> sumQueue = new Queue<int>(); // 路径和队列
+        int totalSum = 0; // 统计最终和
+
+        nodeQueue.Enqueue(root); sumQueue.Enqueue(root.val);
+        while(nodeQueue.Count > 0) {
+            TreeNode curNode = nodeQueue.Dequeue();
+            int curSum = sumQueue.Dequeue();
+
+            if(curNode.left != null) {
+                nodeQueue.Enqueue(curNode.left);
+                sumQueue.Enqueue(curSum * 10 + curNode.left.val);
+            }
+
+            if(curNode.right != null) {
+                nodeQueue.Enqueue(curNode.right);
+                sumQueue.Enqueue(curSum * 10 + curNode.right.val);
+            }
+
+            // 叶子节点，需要把结果加入totalSum
+            if(curNode.left == null && curNode.right == null) {
+                totalSum += curSum;
+            }
+        }
+
+        return totalSum;
+    }
+}
+```
+
+> **思路二：DFS+递归：递归函数中维护一个从根节点到当前节点的路径和。当遍历到叶子节点时，返回当前路径和；否则，递归计算左右子树的路径和并累加。**
+
+```csharp
+public class Solution {
+    public int SumNumbers(TreeNode root) {
+        return SumNumbersHelp(root, 0);
+    }
+
+    // 辅助函数，sum用于记录根到当前节点的和
+    public int SumNumbersHelp(TreeNode root, int sum) {
+        if(root == null) {
+            return 0;
+        }
+
+        sum = sum * 10 + root.val; // 更新和
+
+        // 叶子节点
+        if(root.left == null && root.right == null) {
+            return sum;
+        }
+
+        int leftSum = SumNumbersHelp(root.left, sum);
+        int rightSum = SumNumbersHelp(root.right, sum);
+
+        return leftSum + rightSum;
+    }
+}
+```
+
+## [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
+
+二叉树中的 **路径** 被定义为一条节点序列，序列中每对相邻节点之间都存在一条边。同一个节点在一条路径序列中 **至多出现一次** 。该路径 **至少包含一个** 节点，且不一定经过根节点。
+
+**路径和** 是路径中各节点值的总和。
+
+给你一个二叉树的根节点 `root` ，返回其 **最大路径和** 。
+
+**示例 1：**
+
+```
+输入：root = [1,2,3]
+输出：6
+解释：最优路径是 2 -> 1 -> 3 ，路径和为 2 + 1 + 3 = 6
+```
+
+**示例 2：**
+
+```
+输入：root = [-10,9,20,null,null,15,7]
+输出：42
+解释：最优路径是 15 -> 20 -> 7 ，路径和为 15 + 20 + 7 = 42
+```
+
+> **思路：辅助函数递归**
+>
+> 1. **递归计算贡献值：**
+>    **对于每个节点，递归计算其左右子节点的最大贡献值（如果贡献值为负，则取0，表示不选择该子树）。**
+> 2. **更新最大路径和：**
+>    **当前节点的路径和包括当前节点值加上左右子节点的贡献值，用此值更新全局最大值 `maxSum`。**
+> 3. **返回单侧最大贡献值：**
+>    **当前节点向上返回时，只能选择左或右子节点的贡献值中的较大者，加上当前节点值，作为当前节点的最大贡献值。**
+> 4. **全局变量记录结果：**
+>    **使用全局变量 `maxSum` 记录遍历过程中出现的最大路径和，最终返回该值。**
+
+```csharp
+public class Solution {
+    int maxSum = int.MinValue;
+    public int MaxPathSum(TreeNode root) {
+        MaxGain(root);
+        return maxSum;
+    }
+
+    // 辅助函数，更新节点的最大贡献值并返回单侧最大贡献值
+    private int MaxGain(TreeNode node) {
+        if(node == null) {
+            return 0;
+        }
+
+        // 递归计算左右子节点的最大贡献值（取非负）
+        int leftGain = Math.Max(MaxGain(node.left), 0);
+        int rightGain = Math.Max(MaxGain(node.right), 0);
+
+        int curGain = node.val + leftGain + rightGain;
+
+        // 更新maxSum
+        maxSum = Math.Max(maxSum, curGain);
+
+        // 返回节点的最大贡献值，左右贡献值只能取其一
+        return node.val + Math.Max(leftGain, rightGain);
+    }
+}
+```
+
