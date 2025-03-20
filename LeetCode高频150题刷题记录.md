@@ -1,4 +1,4 @@
-# LeetCode经典150题做题笔记
+# LeetCode经典150题做题笔记（一）
 
 ## [88.合并两个有需数组](https://leetcode.cn/problems/merge-sorted-array?envType=study-plan-v2&envId=top-interview-150)
 
@@ -7136,6 +7136,466 @@ public class Solution {
             node = node.left;
         }
         return depth;
+    }
+}
+```
+
+## [236. 二叉树的最近公共祖先](https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/)
+
+给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
+
+百度百科中最近公共祖先的定义为：“对于有根树 T 的两个节点 p、q，最近公共祖先表示为一个节点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（**一个节点也可以是它自己的祖先**）。”
+
+**示例 1：**
+
+```
+输入：root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
+输出：3
+解释：节点 5 和节点 1 的最近公共祖先是节点 3 。
+```
+
+**示例 2：**
+
+```
+输入：root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4
+输出：5
+解释：节点 5 和节点 4 的最近公共祖先是节点 5 。因为根据定义最近公共祖先节点可以为节点本身。
+```
+
+**示例 3：**
+
+```
+输入：root = [1,2], p = 1, q = 2
+输出：1
+```
+
+> **思路一：记录父节点和深度再回溯。**
+>
+> 1. **使用层序遍历（BFS）来遍历整个二叉树，在遍历的过程中记录每个节点的父节点和深度。**
+> 2. **通过回溯的方式来找到 `p` 和 `q` 的最近公共祖先：**
+>    - **比较 `p` 和 `q` 的深度，如果 `p` 的深度大于 `q` 的深度，则将 `p` 向上移动到它的父节点，反之则将 `q` 向上移动。**
+>    - **重复这个过程，直到 `p` 和 `q` 指向同一个节点，就是它们的最近公共祖先。**
+
+```cs
+public class Solution
+{
+    public TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q)
+    {
+        if (root == null)
+        {
+            return null;
+        }
+
+        // 字典存储每个节点的父节点
+        Dictionary<TreeNode, TreeNode> parentDict = new Dictionary<TreeNode, TreeNode>();
+        // 字典存储每个节点的深度
+        Dictionary<TreeNode, int> depthDict = new Dictionary<TreeNode, int>();
+
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        parentDict[root] = null; // 根节点的父节点为 null
+        depthDict[root] = 0; // 根节点的深度为 0
+
+        // 层序遍历，记录每个节点的父节点和深度
+        while (queue.Count > 0)
+        {
+            TreeNode node = queue.Dequeue();
+            int currentDepth = depthDict[node];
+
+            if (node.left != null) {
+                queue.Enqueue(node.left);
+                parentDict[node.left] = node; // 记录左子节点的父节点
+                depthDict[node.left] = currentDepth + 1; // 记录左子节点的深度
+            }
+            if (node.right != null) {
+                queue.Enqueue(node.right);
+                parentDict[node.right] = node; // 记录右子节点的父节点
+                depthDict[node.right] = currentDepth + 1; // 记录右子节点的深度
+            }
+        }
+
+        // 回溯找到最近公共祖先
+        while (p != q)
+        {
+            if (depthDict[p] > depthDict[q])
+            {
+                p = parentDict[p]; // 向上移动较深的节点
+            } else {
+                q = parentDict[q]; // 向上移动较深的节点
+            }
+        }
+
+        return p; // 返回最近公共祖先
+    }
+}
+```
+
+> **思路二：递归。**
+>
+> 1. **终止条件：**
+>    - **如果 `root` 是 `null`，返回 `null`。**
+>    - **如果 `root` 是 `p` 或 `q`，直接返回 `root`，因为当前节点就是 `p` 或 `q`。**
+> 2. **递归查找左右子树：**
+>    - **在左子树中递归查找 `p` 和 `q`，结果存储在 `left` 中。**
+>    - **在右子树中递归查找 `p` 和 `q`，结果存储在 `right` 中。**
+> 3. **判断最近公共祖先：**
+>    - **如果 `left` 和 `right` 都不为空，说明 `p` 和 `q` 分别位于当前节点的左右子树中，当前节点就是它们的最近公共祖先。**
+>    - **如果 `left` 为空，说明 `p` 和 `q` 都在右子树中，返回 `right`。**
+>    - **如果 `right` 为空，说明 `p` 和 `q` 都在左子树中，返回 `left`。**
+
+```csharp
+public class Solution
+{
+    public TreeNode LowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q)
+    {
+        if(root == null) {
+            return null;
+        }
+
+        /** 递归深度搜索 */
+        // 递归退出条件：root是p或q => 说明p或q至少有一个在root中
+        if(root == p || root == q) {
+            return root;
+        }
+
+        // 递归查找左子树中是否存在公共祖先
+        TreeNode left = LowestCommonAncestor(root.left, p, q);
+        // 递归查找右子树中是否存在公共祖先
+        TreeNode right = LowestCommonAncestor(root.right, p, q);
+
+        if(left != null && right != null) {
+            // p和q分别位于左右子树中
+            return root;
+        }
+
+        if(left == null) {
+            // 如果left为空，说明p和q都在右子树中
+            return right;
+        } else {
+            // 如果right为空，说明p和q都在左子树中
+            return left;
+        }
+    }
+}
+```
+
+## [199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
+
+给定一个二叉树的 **根节点** `root`，想象自己站在它的右侧，按照从顶部到底部的顺序，返回从右侧所能看到的节点值。
+
+**示例 1：**
+
+```
+输入：root = [1,2,3,null,5,null,4]
+
+输出：[1,3,4]
+```
+
+**示例 2：**
+
+```
+输入：root = [1,2,3,4,null,null,null,5]
+
+输出：[1,3,4,5]
+```
+
+**示例 3：**
+
+```
+输入：root = [1,null,3]
+
+输出：[1,3]
+```
+
+**示例 4：**
+
+```
+输入：root = []
+
+输出：[]
+```
+
+> **思路一：层序遍历，用`queue.Count`获取每一层的节点个数就可知每一层的最后一个节点，把最后一个节点的值加入结果。**
+
+```csharp
+public class Solution {
+    public IList<int> RightSideView(TreeNode root) {
+        IList<int> res = new List<int>();
+        if(root == null) {
+            return res;
+        }
+        /** 层序遍历 */
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+
+        while(queue.Count > 0) {
+            int layerSize = queue.Count; // 每一层的节点个数
+            int lastNodeVal = 0; // 每一层最后一个节点的值
+            for(int i=0; i<layerSize; i++) {
+                TreeNode node = queue.Dequeue();
+                lastNodeVal = node.val;
+                // 左右节点入队
+                if(node.left != null) {
+                    queue.Enqueue(node.left);
+                }
+                if(node.right != null) {
+                    queue.Enqueue(node.right);
+                }
+            }
+            // 把最后一个节点的值加入结果
+            res.Add(lastNodeVal);
+        }
+
+        return res;
+    }
+}
+```
+
+> **思路二：维护一个外部变量`maxDepth`，用于记录当前访问到的最大层数。递归访问节点，传入`depth`表示当前的层数，每次递归访问子节点深度为`depth+1`；通过优先访问右子树的方式，确保每一层的最右侧节点先被访问到；如果当前深度 `depth` 大于 `maxDepth`，说明访问到新的一层，把访问到的第一个节点（也即每一层最右边的节点）加入结果。**
+
+```cs
+public class Solution {
+    private IList<int> res = new List<int>();
+    private int maxDepth = -1; // 记录遍历到的最大深度
+
+    public IList<int> RightSideView(TreeNode root) {
+        if(root == null) {
+            return res;
+        }
+
+        Traverse(root, 0);
+        return res;
+    }
+
+    // 辅助函数：从右子节点开始递归遍历
+    private void Traverse(TreeNode node, int depth) {
+        if(node == null) {
+            return;
+        }
+
+        if(depth > maxDepth) {
+            res.Add(node.val); // 新的一层最右侧的节点
+            maxDepth = depth; // 更新maxDepth
+        }
+
+        // 优先访问右子树
+        Traverse(node.right, depth + 1);
+        Traverse(node.left, depth + 1);
+    }
+}
+```
+
+## [637. 二叉树的层平均值](https://leetcode.cn/problems/average-of-levels-in-binary-tree/)
+
+给定一个非空二叉树的根节点 `root` , 以数组的形式返回每一层节点的平均值。与实际答案相差 `10-5` 以内的答案可以被接受。
+
+**示例 1：**
+
+```
+输入：root = [3,9,20,null,null,15,7]
+输出：[3.00000,14.50000,11.00000]
+解释：第 0 层的平均值为 3,第 1 层的平均值为 14.5,第 2 层的平均值为 11 。
+因此返回 [3, 14.5, 11] 。
+```
+
+**示例 2:**
+
+```
+输入：root = [3,9,20,15,7]
+输出：[3.00000,14.50000,11.00000]
+```
+
+> **思路：层序遍历。**
+
+```cs
+public class Solution {
+    public IList<double> AverageOfLevels(TreeNode root) {
+        IList<double> res = new List<double>();
+        if(root == null) {
+            return res;
+        }
+        /** 层序遍历 */
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+
+        while(queue.Count > 0) {
+            int layerSize = queue.Count; // 每一层的节点个数
+            long sum = 0; // 每一层之和
+            for(int i=0; i< layerSize; i++) {
+                TreeNode node = queue.Dequeue();
+                sum += node.val; // 出队并累计和
+                if(node.left != null) {
+                    queue.Enqueue(node.left);
+                }
+                if(node.right != null) {
+                    queue.Enqueue(node.right);
+                }
+            }
+
+            res.Add((double)sum/layerSize);
+        }
+
+        return res;
+    }
+}
+```
+
+## [102. 二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/)
+
+给你二叉树的根节点 `root` ，返回其节点值的 **层序遍历** 。 （即逐层地，从左到右访问所有节点）。
+
+**示例 1：**
+
+```
+输入：root = [3,9,20,null,null,15,7]
+输出：[[3],[9,20],[15,7]]
+```
+
+**示例 2：**
+
+```
+输入：root = [1]
+输出：[[1]]
+```
+
+**示例 3：**
+
+```
+输入：root = []
+输出：[]
+```
+
+> **思路：层序遍历。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> LevelOrder(TreeNode root) {
+        IList<IList<int>> res = new List<IList<int>>();
+        if(root == null) {
+            return res;
+        }
+
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+        while(queue.Count > 0) {
+            int layerSize = queue.Count; // 每一层的节点个数
+            List<int> layerNodes = new List<int>();
+            for(int i=0; i<layerSize; i++) {
+                TreeNode node = queue.Dequeue();
+                layerNodes.Add(node.val);
+                if(node.left != null) {
+                    queue.Enqueue(node.left);
+                }
+                if(node.right != null) {
+                    queue.Enqueue(node.right);
+                }
+            }
+            res.Add(layerNodes);
+        }
+
+        return res;
+    }
+}
+```
+
+## [103. 二叉树的锯齿形层序遍历](https://leetcode.cn/problems/binary-tree-zigzag-level-order-traversal/)
+
+给你二叉树的根节点 `root` ，返回其节点值的 **锯齿形层序遍历** 。（即先从左往右，再从右往左进行下一层遍历，以此类推，层与层之间交替进行）。
+
+**示例 1：**
+
+```
+输入：root = [3,9,20,null,null,15,7]
+输出：[[3],[20,9],[15,7]]
+```
+
+**示例 2：**
+
+```
+输入：root = [1]
+输出：[[1]]
+```
+
+**示例 3：**
+
+```
+输入：root = []
+输出：[]
+```
+
+> **思路一：层序遍历，用`isLeft`变量标记每层是否是从左到右，如果不是，遍历完一层后再反转列表。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> ZigzagLevelOrder(TreeNode root) {
+        IList<IList<int>> res = new List<IList<int>>();
+        if(root == null) {
+            return res;
+        }
+        bool isLeft = true; // 是否是从左到右加入列表
+        Queue<TreeNode> queue = new Queue<TreeNode>();
+        queue.Enqueue(root);
+
+        while(queue.Count > 0) {
+            int layerSize = queue.Count; // 每一层的节点个数
+            List<int> layerNodes = new List<int>();
+            for(int i=0; i<layerSize; i++) {
+                TreeNode node = queue.Dequeue();
+                layerNodes.Add(node.val);
+                if(node.left != null) {
+                    queue.Enqueue(node.left);
+                }
+                if(node.right != null) {
+                    queue.Enqueue(node.right);
+                }
+            }
+            if(!isLeft) {
+                // 如果是从右到左，需要反转List
+                layerNodes.Reverse();
+            }
+            res.Add(layerNodes);
+            isLeft = !isLeft;
+        }
+
+        return res;
+    }
+}
+```
+
+> **思路二：递归。先序遍历中，每一层节点的访问顺序一定是从左到右的，可用`level`记录当前层数，`res[level]`就是当前层节点构成的列表。根据是当前层奇数层还是偶数层，决定从后面添加节点，还是从前面插入节点。**
+
+```csharp
+public class Solution {
+    public IList<IList<int>> ZigzagLevelOrder(TreeNode root) {
+        IList<IList<int>> res = new List<IList<int>>();
+        if (root == null) {
+            return res;
+        }
+
+        DFS(root, 0, res);
+        return res;
+    }
+
+    private void DFS(TreeNode node, int level, IList<IList<int>> res) {
+        if (node == null) {
+            return;
+        }
+
+        // 如果当前层还没有列表，添加一个空列表
+        if (res.Count <= level) {
+            res.Add(new List<int>());
+        }
+
+        // 根据层数决定添加顺序
+        if (level % 2 == 0) {
+            res[level].Add(node.val); // 从左到右
+        } else {
+            res[level].Insert(0, node.val); // 从右到左
+        }
+
+        // 递归遍历左右子树
+        DFS(node.left, level + 1, res);
+        DFS(node.right, level + 1, res);
     }
 }
 ```
