@@ -6999,3 +6999,144 @@ public class Solution {
 }
 ```
 
+## [173. 二叉搜索树迭代器](https://leetcode.cn/problems/binary-search-tree-iterator/)
+
+实现一个二叉搜索树迭代器类`BSTIterator` ，表示一个按中序遍历二叉搜索树（BST）的迭代器：
+
+- `BSTIterator(TreeNode root)` 初始化 `BSTIterator` 类的一个对象。BST 的根节点 `root` 会作为构造函数的一部分给出。指针应初始化为一个不存在于 BST 中的数字，且该数字小于 BST 中的任何元素。
+- `boolean hasNext()` 如果向指针右侧遍历存在数字，则返回 `true` ；否则返回 `false` 。
+- `int next()`将指针向右移动，然后返回指针处的数字。
+
+注意，指针初始化为一个不存在于 BST 中的数字，所以对 `next()` 的首次调用将返回 BST 中的最小元素。
+
+你可以假设 `next()` 调用总是有效的，也就是说，当调用 `next()` 时，BST 的中序遍历中至少存在一个下一个数字。
+
+**示例：**
+
+```
+输入
+["BSTIterator", "next", "next", "hasNext", "next", "hasNext", "next", "hasNext", "next", "hasNext"]
+[[[7, 3, 15, null, null, 9, 20]], [], [], [], [], [], [], [], [], []]
+输出
+[null, 3, 7, true, 9, true, 15, true, 20, false]
+
+解释
+BSTIterator bSTIterator = new BSTIterator([7, 3, 15, null, null, 9, 20]);
+bSTIterator.next();    // 返回 3
+bSTIterator.next();    // 返回 7
+bSTIterator.hasNext(); // 返回 True
+bSTIterator.next();    // 返回 9
+bSTIterator.hasNext(); // 返回 True
+bSTIterator.next();    // 返回 15
+bSTIterator.hasNext(); // 返回 True
+bSTIterator.next();    // 返回 20
+bSTIterator.hasNext(); // 返回 False
+```
+
+> **思路：等价于对二叉树进行中序遍历。**
+
+```csharp
+public class BSTIterator {
+    private int index;
+    private List<int> arr;
+
+    public BSTIterator(TreeNode root) {
+        index = 0;
+        arr = new List<int>();
+        InorderTraversal(root, arr);
+    }
+    
+    public int Next() {
+        return arr[index++];
+    }
+    
+    public bool HasNext() {
+        return index < arr.Count;
+    }
+
+    private void InorderTraversal(TreeNode root, List<int> arr) {
+        if(root == null) {
+            return;
+        }
+
+        InorderTraversal(root.left, arr);
+        arr.Add(root.val);
+        InorderTraversal(root.right, arr);
+    }
+}
+```
+
+## [222. 完全二叉树的节点个数](https://leetcode.cn/problems/count-complete-tree-nodes/)
+
+给你一棵 **完全二叉树** 的根节点 `root` ，求出该树的节点个数。
+
+完全二叉树的定义如下：在完全二叉树中，除了最底层节点可能没填满外，其余每层节点数都达到最大值，并且最下面一层的节点都集中在该层最左边的若干位置。若最底层为第 `h` 层（从第 0 层开始），则该层包含 `1~ 2h` 个节点。
+
+**示例 1：**
+
+```
+输入：root = [1,2,3,4,5,6]
+输出：6
+```
+
+**示例 2：**
+
+```
+输入：root = []
+输出：0
+```
+
+**示例 3：**
+
+```
+输入：root = [1]
+输出：1
+```
+
+> **思路一：常规递归式深度搜索，复杂度为O(N)。**
+
+```cs
+public class Solution {
+    public int CountNodes(TreeNode root) {
+        if(root == null) {
+            return 0;
+        }
+
+        return CountNodes(root.left) + CountNodes(root.right) + 1;
+    }
+}
+```
+
+> **思路二：利用完全二叉树的性质——左右子树必然有一棵是满二叉树，知道高度就能知道个数，剩下一棵没满的递归调用计算个数，复杂度为O(logN * logN)。**
+
+```csharp
+public class Solution {
+    public int CountNodes(TreeNode root) {
+        if(root == null) {
+            return 0;
+        }
+
+        int leftDepth = GetDepth(root.left);
+        int rightDepth = GetDepth(root.right);
+
+        if(leftDepth == rightDepth) {
+            // 左子树满，最后一层的最后一个节点位于右子树
+            return 1 + (1 << leftDepth) - 1 + CountNodes(root.right);
+        } else {
+            // 右子树满，最后一层的最后一个节点位于左子树
+            return 1 + (1 << rightDepth) - 1 + CountNodes(root.left);
+        }
+    }
+
+    // 辅助函数，得到某完全二叉树的高度
+    private int GetDepth(TreeNode node) {
+        int depth = 0;
+        while(node != null) {
+            depth ++;
+            node = node.left;
+        }
+        return depth;
+    }
+}
+```
+
