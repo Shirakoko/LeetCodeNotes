@@ -827,3 +827,445 @@ public class Solution
 }
 ```
 
+## [909. 蛇梯棋](https://leetcode.cn/problems/snakes-and-ladders/)
+
+给你一个大小为 `n x n` 的整数矩阵 `board` ，方格按从 `1` 到 `n2` 编号，编号遵循 [转行交替方式](https://baike.baidu.com/item/牛耕式转行书写法/17195786) ，**从左下角开始** （即，从 `board[n - 1][0]` 开始）的每一行改变方向。
+
+你一开始位于棋盘上的方格 `1`。每一回合，玩家需要从当前方格 `curr` 开始出发，按下述要求前进：
+
+- 选定目标方格`next`，目标方格的编号在范围`[curr + 1, min(curr + 6, n2)]`。
+  - 该选择模拟了掷 **六面体骰子** 的情景，无论棋盘大小如何，玩家最多只能有 6 个目的地。
+- 传送玩家：如果目标方格 `next` 处存在蛇或梯子，那么玩家会传送到蛇或梯子的目的地。否则，玩家传送到目标方格 `next` 。 
+- 当玩家到达编号 `n2` 的方格时，游戏结束。
+
+如果 `board[r][c] != -1` ，位于 `r` 行 `c` 列的棋盘格中可能存在 “蛇” 或 “梯子”。那个蛇或梯子的目的地将会是 `board[r][c]`。编号为 `1` 和 `n2` 的方格不是任何蛇或梯子的起点。
+
+注意，玩家在每次掷骰的前进过程中最多只能爬过蛇或梯子一次：就算目的地是另一条蛇或梯子的起点，玩家也 **不能** 继续移动。
+
+- 举个例子，假设棋盘是 `[[-1,4],[-1,3]]` ，第一次移动，玩家的目标方格是 `2` 。那么这个玩家将会顺着梯子到达方格 `3` ，但 **不能** 顺着方格 `3` 上的梯子前往方格 `4` 。（简单来说，类似飞行棋，玩家掷出骰子点数后移动对应格数，遇到单向的路径（即梯子或蛇）可以直接跳到路径的终点，但如果多个路径首尾相连，也不能连续跳多个路径）
+
+返回达到编号为 `n2` 的方格所需的最少掷骰次数，如果不可能，则返回 `-1`。
+
+**示例 1：**
+
+```
+输入：board = [[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,-1,-1,-1,-1,-1],[-1,35,-1,-1,13,-1],[-1,-1,-1,-1,-1,-1],[-1,15,-1,-1,-1,-1]]
+输出：4
+解释：
+首先，从方格 1 [第 5 行，第 0 列] 开始。 
+先决定移动到方格 2 ，并必须爬过梯子移动到到方格 15 。
+然后决定移动到方格 17 [第 3 行，第 4 列]，必须爬过蛇到方格 13 。
+接着决定移动到方格 14 ，且必须通过梯子移动到方格 35 。 
+最后决定移动到方格 36 , 游戏结束。 
+可以证明需要至少 4 次移动才能到达最后一个方格，所以答案是 4 。 
+```
+
+**示例 2：**
+
+```
+输入：board = [[-1,-1],[-1,3]]
+输出：1
+```
+
+> **思路：广度优先搜索寻找最短路径，确保第一次到达目标节点时所用的步数是最小的。把问题抽象为一个图的最短路径问题，每个格子可以看作图中的一个节点，骰子的步数（1到6）决定了从一个节点到另一个节点的边。梯子和蛇则相当于图中的特殊边，可以直接将玩家从一个节点传送到另一个节点。**
+
+```csharp
+public class Solution
+{
+    public int SnakesAndLadders(int[][] board)
+    {
+        int n = board.Length;
+
+        // 目标数字（最后一个数字）
+        int targetNumber = n * n; 
+
+        // 辅助队列，用于广度优先搜索
+        Queue<int> queue = new Queue<int>();
+        // 辅助数组，记录每个节点是否被访问过
+        bool[] visited = new bool[targetNumber + 1];
+        // 辅助数组，记录起点到每个节点的步数
+        int[] steps = new int[targetNumber + 1];
+
+        /** 广度优先搜索 */
+        // 初始节点入队，标记访问、更新步数
+        queue.Enqueue(1);
+        visited[1] = true;
+        steps[1] = 0;
+
+        while (queue.Count > 0)
+        {
+            // 出队，判断如果到达目标节点，返回步数
+            int currentNumber = queue.Dequeue();
+            if (currentNumber == targetNumber)
+            {
+                return steps[currentNumber];
+            }
+
+            // 遍历所有可能的骰子步数（1到6）
+            for (int i = 1; i <= 6; i++)
+            {
+                // 得到下一步的节点nextNumber
+                int nextNumber = currentNumber + i;
+
+                // 如果下一步节点超过棋盘范围，跳过
+                if(nextNumber > targetNumber)
+                {
+                    continue;
+                }
+
+                // 根据board中梯和蛇的信息获取下一步的实际节点
+                int row = GetRow(n, nextNumber);
+                int col = GetCol(n, nextNumber);
+
+                // 如果当前格子有梯子或蛇，更新nextNumber
+                if (board[row][col] != -1)
+                {
+                    nextNumber = board[row][col]; // 到达梯或蛇的终点
+                }
+
+                // 如果下一个节点没被访问过，入队并标记访问、更新步数
+                if (visited[nextNumber] == false)
+                {
+                    queue.Enqueue(nextNumber);
+                    visited[nextNumber] = true;
+                    steps[nextNumber] = steps[currentNumber] + 1;
+                }
+            }
+        }
+
+        // 如果无法到达终点，返回-1
+        return -1;
+    }
+
+    // 辅助函数，根据数字获取行索引
+    private int GetRow(int n, int number)
+    {
+        // 棋盘的行是从下往上数的
+        return (n - 1) - (number - 1) / n;
+    }
+
+    // 辅助函数，根据数字获取列索引
+    private int GetCol(int n, int number) 
+    {
+        int row = GetRow(n, number);
+        if(row % 2 != n % 2)
+        {
+            return (number - 1) % n;
+        }
+        else
+        {
+            return (n - 1) - (number - 1) % n;
+        }
+    }
+}
+```
+
+## [433. 最小基因变化](https://leetcode.cn/problems/minimum-genetic-mutation/)
+
+基因序列可以表示为一条由 8 个字符组成的字符串，其中每个字符都是 `'A'`、`'C'`、`'G'` 和 `'T'` 之一。
+
+假设我们需要调查从基因序列 `start` 变为 `end` 所发生的基因变化。一次基因变化就意味着这个基因序列中的一个字符发生了变化。
+
+- 例如，`"AACCGGTT" --> "AACCGGTA"` 就是一次基因变化。
+
+另有一个基因库 `bank` 记录了所有有效的基因变化，只有基因库中的基因才是有效的基因序列。（变化后的基因必须位于基因库 `bank` 中）
+
+给你两个基因序列 `start` 和 `end` ，以及一个基因库 `bank` ，请你找出并返回能够使 `start` 变化为 `end` 所需的最少变化次数。如果无法完成此基因变化，返回 `-1` 。
+
+注意：起始基因序列 `start` 默认是有效的，但是它并不一定会出现在基因库中。
+
+**示例 1：**
+
+```
+输入：start = "AACCGGTT", end = "AACCGGTA", bank = ["AACCGGTA"]
+输出：1
+```
+
+**示例 2：**
+
+```
+输入：start = "AACCGGTT", end = "AAACGGTA", bank = ["AACCGGTA","AACCGCTA","AAACGGTA"]
+输出：2
+```
+
+**示例 3：**
+
+```
+输入：start = "AAAAACCC", end = "AACCCCCC", bank = ["AAAACCCC","AAACCCCC","AACCCCCC"]
+输出：3
+```
+
+> **思路：有向无权图的广度优先搜索，寻找最短路径。**
+>
+> 1. **问题建模：**
+>    - **将每个基因序列看作图中的一个节点。**
+>    - **如果两个基因序列之间只有一个字符不同，则在这两个节点之间建立一条边。**
+>    - **问题转化为：在图中找到从 `startGene` 到 `endGene` 的最短路径。**
+> 2. **图的构建：**
+>    - **遍历基因库 `bank`，将每个基因序列作为节点加入图中。**
+>    - **对于每一对基因序列，检查它们是否只有一个字符不同。如果是，则在它们之间建立双向边。**
+>    - **将 `startGene` 也加入图中，并检查它与基因库中其他基因序列的连接关系。**
+> 3. **广度优先搜索（BFS）：**
+>    - **使用 BFS 从 `startGene` 开始遍历图，寻找到达 `endGene` 的最短路径。**
+>    - **BFS 的特点是逐层遍历，因此第一次到达 `endGene` 时的路径长度一定是最短的。**
+>    - **使用队列辅助 BFS，并用一个字典记录每个节点的访问状态和步数。**
+> 4. **边界条件：**
+>    - **如果 `endGene` 不在基因库 `bank` 中，直接返回 `-1`。**
+>    - **如果 `startGene` 和 `endGene` 相同，直接返回 `0`。**
+
+```csharp
+public class Solution
+{
+    public int MinMutation(string startGene, string endGene, string[] bank)
+    {
+        // graph[A]：List<string>，表示A的所有邻居
+        Dictionary<string, List<string>> graph = new Dictionary<string, List<string>>();
+
+        // 把bank中的字符串当作节点加入graph
+        for(int i=0; i<bank.Length; i++)
+        {
+            if (!graph.ContainsKey(bank[i])) // 检查是否已经存在
+            {
+                graph.Add(bank[i], new List<string>());
+            }
+        }
+
+        // 根据bank构建graph中节点的连接关系
+        for(int i=0; i<bank.Length-1; i++)
+        {
+            for(int j=i+1; j<bank.Length; j++)
+            {
+                var start = bank[i];
+                var end = bank[j];
+                if(CheckNotSameCharIsOne(start, end))
+                {
+                    // 构建双向连接关系
+                    graph[start].Add(end);
+                    graph[end].Add(start);
+                }
+            }
+        }
+
+        // 把startGene加入graph，并尝试构建与graph中已有节点的连接关系
+        if(graph.ContainsKey(startGene) == false)
+        {
+            graph.Add(startGene, new List<string>());
+            for(int i=0; i<bank.Length; i++)
+            {
+                if(CheckNotSameCharIsOne(startGene, bank[i]))
+                {
+                    // 构建双向连接关系
+                    graph[startGene].Add(bank[i]);
+                    graph[bank[i]].Add(startGene);
+                }
+            }
+        }
+
+        // 广度搜索，寻找从start到end的最短路径
+        Queue<string> queue = new Queue<string>(); // 广度搜索辅助队列
+        Dictionary<string, bool> visited = new Dictionary<string, bool>(); // 标记节点是否访问过，防止重复访问
+        Dictionary<string, int> steps = new Dictionary<string, int>(); // 记录从起点到当前节点的最小步数
+
+        // 起始节点入队，标记访问，记录步数为0
+        queue.Enqueue(startGene);
+        visited[startGene] = true;
+        steps[startGene] = 0;
+
+        while(queue.Count > 0)
+        {
+            string currentStr = queue.Dequeue();
+            // 检查是否到达终点
+            if (currentStr == endGene)
+            {
+                return steps[currentStr];
+            }
+
+            // 遍历当前节点的邻居
+            foreach(var neighbor in graph[currentStr])
+            {
+                // 如果邻居没被访问过，邻居入队，标记访问，记录步数
+                if (visited.ContainsKey(neighbor) == false || visited[neighbor] == false)
+                {
+                    queue.Enqueue(neighbor);
+                    visited[neighbor] = true;
+                    steps[neighbor] = steps[currentStr] + 1;
+                }
+            }
+        }
+
+        // 如果都遍历完了也没到达终点，返回-1
+        return -1;
+    }
+
+    // 辅助函数，判断两个字符串不一样的字符个数是否为1
+    private bool CheckNotSameCharIsOne(string s1, string s2)
+    {
+        int count = 0;
+        for(int i=0; i<8; i++)
+        {
+            if (s1[i] != s2[i])
+            {
+                count++;
+            }
+
+            if(count > 1)
+            {
+                return false;
+            }
+        }
+
+        return count == 1;
+    }
+}
+```
+
+## [127. 单词接龙](https://leetcode.cn/problems/word-ladder/)
+
+字典 `wordList` 中从单词 `beginWord` 到 `endWord` 的 **转换序列** 是一个按下述规格形成的序列 `beginWord -> s1 -> s2 -> ... -> sk`：
+
+- 每一对相邻的单词只差一个字母。
+-  对于 `1 <= i <= k` 时，每个 `si` 都在 `wordList` 中。注意， `beginWord` 不需要在 `wordList` 中。
+- `sk == endWord`
+
+给你两个单词 `beginWord` 和 `endWord` 和一个字典 `wordList` ，返回 *从 `beginWord` 到 `endWord` 的 **最短转换序列** 中的 **单词数目*** 。如果不存在这样的转换序列，返回 `0` 。
+
+**示例 1：**
+
+```
+输入：beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log","cog"]
+输出：5
+解释：一个最短转换序列是 "hit" -> "hot" -> "dot" -> "dog" -> "cog", 返回它的长度 5。
+```
+
+**示例 2：**
+
+```
+输入：beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log"]
+输出：0
+解释：endWord "cog" 不在字典中，所以无法进行转换。
+```
+
+>  **思路：和上一题几乎一样，有向无权图的广度优先搜索，寻找最短路径。**
+>
+> 1. **初始化图：**
+>    - **遍历 `wordList`，将每个单词作为图的节点，并初始化其邻居列表。**
+>    - **遍历 `wordList` 中的所有单词对，检查它们是否可以建立连接。如果可以，则在它们之间建立双向边。**
+> 2. **将 `beginWord` 加入图：**
+>    - **如果 `beginWord` 不在图中，则将其加入图。**
+>    - **遍历 `wordList`，检查 `beginWord` 与每个单词是否可以建立连接。如果可以，则建立双向边。**
+> 3. **BFS 遍历：**
+>    - **将 `beginWord` 加入队列，并标记为已访问，记录步数为 1。**
+>    - **从队列中取出当前节点，检查它是否为目标节点。如果是，则返回当前步数。**
+>    - **遍历当前节点的所有邻居节点，将未访问的邻居节点加入队列，并更新步数。**
+>    - **重复上述过程，直到队列为空或找到目标节点。**
+
+```csharp
+public class Solution
+{
+    public int LadderLength(string beginWord, string endWord, IList<string> wordList)
+    {
+        int n = wordList.Count;
+        // graph[A]表示A的邻居列表
+        Dictionary<string, List<string>> graph = new Dictionary<string, List<string>>();
+
+        // 把wordList中的每个单词作为节点加入graph
+        for(int i=0; i<n; i++)
+        {
+            if (graph.ContainsKey(wordList[i]) == false)
+            {
+                graph.Add(wordList[i], new List<string>());
+            }
+        }
+
+        // 遍历wordList，构建节点的连接关系
+        for(int i=0; i<n-1; i++)
+        {
+            for(int j=i+1; j<n; j++)
+            {
+                string start = wordList[i];
+                string end = wordList[j];
+
+                if(CheckNotSameCharIsOne(start, end))
+                {
+                    // 构建双向连接关系
+                    graph[start].Add(end);
+                    graph[end].Add(start);
+                }
+            }
+        }
+
+        // 把beginWord加入graph
+        if(graph.ContainsKey(beginWord) == false)
+        {
+            graph.Add(beginWord, new List<string>());
+            // 遍历wordList，检查每个节点是否能与beginWord构建连接关系
+            for(int i=0; i<n; i++)
+            {
+                if (CheckNotSameCharIsOne(beginWord, wordList[i]))
+                {
+                    // 构建双向连接关系
+                    graph[beginWord].Add(wordList[i]);
+                    graph[wordList[i]].Add(beginWord);
+                }
+            }
+        }
+
+        // 广度优先搜索遍历节点
+        Queue<string> queue = new Queue<string>(); // 辅助队列，用于广度优先搜索
+        HashSet<string> visited = new HashSet<string>(); // 辅助哈希集合，记录节点是否被访问过，避免重复访问
+        Dictionary<string, int> steps = new Dictionary<string, int>(); // 辅助字典，记录从起点到该节点的步数
+
+        // 起始节点加入队列，标记访问并记录步数
+        queue.Enqueue(beginWord);
+        visited.Add(beginWord);
+        steps[beginWord] = 1;
+
+        while(queue.Count > 0)
+        {
+            string currentWord = queue.Dequeue();
+
+            // 检查当前节点已经是终点
+            if(currentWord == endWord)
+            {
+                return steps[currentWord];
+            }
+            
+            // 遍历邻居节点，如果邻居节点没有被访问过，邻居节点入队、标记访问、记录步数
+            foreach(var neighbor in graph[currentWord])
+            {
+                if(visited.Contains(neighbor) == false)
+                {
+                    queue.Enqueue(neighbor);
+                    visited.Add(neighbor);
+                    steps[neighbor] = steps[currentWord] + 1;
+                }
+            }
+        }
+
+        // 如果遍历完了还没到达终点，返回0
+        return 0;
+    }
+
+    // 辅助函数，判断两个字符串不一样的字符个数是否为1
+    private bool CheckNotSameCharIsOne(string s1, string s2)
+    {
+        int length = s1.Length;
+        int count = 0;
+        for(int i=0; i<length; i++)
+        {
+            if (s1[i] != s2[i])
+            {
+                count++;
+            }
+
+            if(count > 1)
+            {
+                return false;
+            }
+        }
+
+        return count == 1;
+    }
+}
+```
+
