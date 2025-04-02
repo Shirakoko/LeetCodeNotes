@@ -1500,3 +1500,162 @@ public class WordDictionary {
 }
 ```
 
+## [212. 单词搜索 II](https://leetcode.cn/problems/word-search-ii/)
+
+给定一个 `m x n` 二维字符网格 `board` 和一个单词（字符串）列表 `words`， *返回所有二维网格上的单词* 。
+
+单词必须按照字母顺序，通过 **相邻的单元格** 内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母在一个单词中不允许被重复使用。
+
+**示例 1：**
+
+```
+输入：board = [["o","a","a","n"],["e","t","a","e"],["i","h","k","r"],["i","f","l","v"]], words = ["oath","pea","eat","rain"]
+输出：["eat","oath"]
+```
+
+**示例 2：**
+
+```
+输入：board = [["a","b"],["c","d"]], words = ["abcb"]
+输出：[]
+```
+
+思路一（超时）：辅助函数`SeachHelper`以某个格子为起点，递归搜索单词是否存在；辅助函数`CheckWordExist`遍历每个可能的起点，搜索单词在网格中是否存在；时间复杂度是`O(k * m * n * 4^L)`，L为单词平均长度。
+
+```cs
+public class Solution {
+    public IList<string> FindWords(char[][] board, string[] words) {
+        int m = board.Length;
+        int n = board[0].Length;
+
+        IList<string> result = new List<string>();
+
+        foreach(string word in words) {
+            // 遍历words中的每个单词，检查字典中是否存在
+            if(CheckWordExist(m, n, board, word)) {
+                result.Add(word);
+            }
+        }
+
+        return result;
+    }
+
+    // 辅助函数，查询某个单词是否存在
+    private bool CheckWordExist(int m, int n, char[][] board, string word)
+    {
+        for(int i=0; i<m; i++)
+        {
+            for(int j=0; j<n; j++)
+            {
+                // 遍历所有可能的起点
+                if(SearchHelper(m, n, board, i, j, word, 0)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // 辅助函数，指定某个起点，递归查询某个单词是否存在
+    private bool SearchHelper(int m, int n, char[][] board, int i, int j, string word, int index) {
+        if(index == word.Length) {
+            // 全部匹配
+            return true;
+        }
+
+        if(i<0 || i >= m || j < 0 || j >= n) {
+            // 超出网格范围
+            return false;
+        }
+
+        if(board[i][j] == word[index])
+        {
+            // 临时标记为已访问（避免重复使用）
+            char temp = board[i][j];
+            board[i][j] = '#';
+
+            // 遍历四个方向，递归匹配下一个字符，只要有一条路走通，就返回true
+            bool found = 
+                SearchHelper(m, n, board, i + 1, j, word, index + 1) || // 向右
+                SearchHelper(m, n, board, i - 1, j, word, index + 1) || // 向左
+                SearchHelper(m, n, board, i, j + 1, word, index + 1) || // 向上
+                SearchHelper(m, n, board, i, j - 1, word, index + 1);   // 向下
+
+            // 恢复字符
+            board[i][j] = temp;
+
+            return found;
+                
+        }
+        return false;
+    }
+}
+```
+
+> **思路二：在思路一的基础上，用Trie前缀树来预处理 `words`，这样可以在 `board` 上进行一次深度优先搜索，同时匹配多个单词，而不是对每个单词单独搜索。这种方法的时间复杂度可以优化到 `O(m * n * 4^L)`。**
+>
+> 1. **构建 Trie 树：将所有 `words` 预处理存入 Trie 树，方便高效匹配。**
+> 2. **DFS 搜索：遍历 `board` 的每个单元格，从 Trie 树的根节点开始匹配。**
+> 3. **剪枝优化：如果当前字符不在 Trie 中，直接跳过；如果匹配到完整单词，加入结果并标记避免重复。**
+> 4. **回溯恢复：临时标记已访问的字符为 `'#'`，递归后恢复原值，确保不影响其他路径搜索。**
+
+```csharp
+public class Solution {
+    public IList<string> FindWords(char[][] board, string[] words) {
+        int m = board.Length;
+        int n = board[0].Length;
+
+        TrieNode root = BuildTrie(words); // 1. 构建Trie树
+        IList<string> result = new List<string>();
+
+        for(int i=0; i<m; i++) {
+            for(int j=0; j<n; j++) {
+                SearchHelper(m, n, board, i, j, root, result); // 2. 从每个单元格开始DFS
+            }
+        }
+        return result;
+    }
+
+    private void SearchHelper(int m, int n, char[][] board, int i, int j, TrieNode node, IList<string> result) {
+        if(i<0 || i >= m || j < 0 || j >= n) return; // 越界检查
+
+        char c = board[i][j];
+        if(c == '#' || !node.Children.ContainsKey(c)) return; // 3. 剪枝：字符不匹配或已访问
+
+        node = node.Children[c]; // 移动到Trie的子节点
+        if(node.Word != null) {
+            result.Add(node.Word); // 4. 找到完整单词
+            node.Word = null; // 避免重复添加
+        }
+
+        board[i][j] = '#'; // 标记为已访问
+        // 5. 向四个方向DFS
+        SearchHelper(m, n, board, i+1, j, node, result);
+        SearchHelper(m, n, board, i-1, j, node, result);
+        SearchHelper(m, n, board, i, j+1, node, result);
+        SearchHelper(m, n, board, i, j-1, node, result);
+        board[i][j] = c; // 6. 回溯恢复字符
+    }
+
+    private class TrieNode {
+        public Dictionary<char, TrieNode> Children { get; } = new Dictionary<char, TrieNode>();
+        public string Word {get; set;} // 存储叶子节点对应的完整单词
+    }
+
+    private TrieNode BuildTrie(string[] words) {
+        TrieNode root = new TrieNode();
+        foreach(string word in words) {
+            TrieNode current = root;
+            foreach(char c in word) {
+                if(!current.Children.ContainsKey(c)) {
+                    current.Children[c] = new TrieNode(); // 7. 构建Trie的路径
+                }
+                current = current.Children[c];
+            }
+            current.Word = word; // 8. 在叶子节点记录单词
+        }
+        return root;
+    }
+}
+```
