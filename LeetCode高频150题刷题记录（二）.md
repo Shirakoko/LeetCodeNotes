@@ -1268,3 +1268,235 @@ public class Solution
     }
 }
 ```
+
+## [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+**[Trie](https://baike.baidu.com/item/字典树/9825209?fr=aladdin)**（发音类似 "try"）或者说 **前缀树** 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。
+
+请你实现 Trie 类：
+
+- `Trie()` 初始化前缀树对象。
+- `void insert(String word)` 向前缀树中插入字符串 `word` 。
+- `boolean search(String word)` 如果字符串 `word` 在前缀树中，返回 `true`（即，在检索之前已经插入）；否则，返回 `false` 。
+- `boolean startsWith(String prefix)` 如果之前已经插入的字符串 `word` 的前缀之一为 `prefix` ，返回 `true` ；否则，返回 `false` 。
+
+**示例：**
+
+```
+输入
+["Trie", "insert", "search", "search", "startsWith", "insert", "search"]
+[[], ["apple"], ["apple"], ["app"], ["app"], ["app"], ["app"]]
+输出
+[null, null, true, false, true, null, true]
+
+解释
+Trie trie = new Trie();
+trie.insert("apple");
+trie.search("apple");   // 返回 True
+trie.search("app");     // 返回 False
+trie.startsWith("app"); // 返回 True
+trie.insert("app");
+trie.search("app");     // 返回 True
+```
+
+> **思路：自定义数据结构`TrieNode`表示前缀树节点，用`Dictionary<char, TrieNode>`数据结构存储其子节点，用`IsEndOfWord`属性标识某节点是否是单词的末尾节点；从根节点到叶子节点的字符序列表示一个单词。**
+
+```cs
+public class TrieNode
+{
+    // 子节点字典
+    public Dictionary<char, TrieNode> Children {get; set;}
+    // 标记当前节点是否是一个单词的末尾
+    public bool IsEndOfWord {get; set;}
+
+    public TrieNode()
+    {
+        Children = new Dictionary<char, TrieNode>();
+        IsEndOfWord = false;
+    }
+}
+
+public class Trie {
+    // 根节点
+    private readonly TrieNode root;
+
+    public Trie() {
+        root = new TrieNode();
+    }
+    
+    public void Insert(string word) {
+        TrieNode current = root;
+        // 遍历单词中的每个字符
+        foreach(char c in word)
+        {
+            if(!current.Children.ContainsKey(c))
+            {
+                // 如果当前字符不在子节点中，新建一个子节点并加入字典
+                current.Children[c] = new TrieNode();
+            }
+
+            // 否则，移动current到该字符对应的子节点
+            current = current.Children[c];
+        }
+
+        // 标记最后一个节点为单词末尾
+        current.IsEndOfWord = true;
+    }
+    
+    public bool Search(string word) {
+        TrieNode current = root;
+
+        // 遍历单词中的每个字符
+        foreach(char c in word)
+        {
+            // 如果字符不在当前节点的子节点中，直接返回false
+            if(!current.Children.ContainsKey(c))
+            {
+                return false;
+            }
+
+            // 否则， 移动current到该字符对应的子节点
+            current = current.Children[c];
+        }
+
+        // 检查是否标记为单词结束
+        return current.IsEndOfWord;
+    }
+    
+    public bool StartsWith(string prefix) {
+        TrieNode current = root;
+
+        // 遍历单词中的每个字符
+        foreach(char c in prefix)
+        {
+            // 如果字符不在当前节点的子节点中，直接返回false
+            if(!current.Children.ContainsKey(c))
+            {
+                return false;
+            }
+
+            // 否则， 移动current到该字符对应的子节点
+            current = current.Children[c];
+        }
+
+         // 只要前缀路径存在就返回true，不关心是否单词结束
+        return true;
+    }
+}
+```
+
+## [211. 添加与搜索单词 - 数据结构设计](https://leetcode.cn/problems/design-add-and-search-words-data-structure/)
+
+请你设计一个数据结构，支持 添加新单词 和 查找字符串是否与任何先前添加的字符串匹配 。
+
+实现词典类 `WordDictionary` ：
+
+- `WordDictionary()` 初始化词典对象
+- `void addWord(word)` 将 `word` 添加到数据结构中，之后可以对它进行匹配
+- `bool search(word)` 如果数据结构中存在字符串与 `word` 匹配，则返回 `true` ；否则，返回 `false` 。`word` 中可能包含一些 `'.'` ，每个 `.` 都可以表示任何一个字母。
+
+**示例：**
+
+```
+输入：
+["WordDictionary","addWord","addWord","addWord","search","search","search","search"]
+[[],["bad"],["dad"],["mad"],["pad"],["bad"],[".ad"],["b.."]]
+输出：
+[null,null,null,null,false,true,true,true]
+
+解释：
+WordDictionary wordDictionary = new WordDictionary();
+wordDictionary.addWord("bad");
+wordDictionary.addWord("dad");
+wordDictionary.addWord("mad");
+wordDictionary.search("pad"); // 返回 False
+wordDictionary.search("bad"); // 返回 True
+wordDictionary.search(".ad"); // 返回 True
+wordDictionary.search("b.."); // 返回 True
+```
+
+> **思路：用Trie前缀树实现，Search方法用深度优先搜索实现，可处理通配符的情况。**
+>
+> 1. **递归深度优先：从根节点开始，沿着单词字符顺序递归深入，每次处理一个字符（类似走迷宫一条路走到黑）**
+> 2. **通配符处理：遇到`.`时，遍历当前节点的所有子节点（相当于同时尝试所有可能的字符路径）**
+> 3. **终止条件：当递归到单词末尾时，检查当前节点是否被标记为单词结尾（IsEndOfWord）**
+> 4. **回溯机制：某条路径失败时会自动回溯到上一个分叉点，继续尝试其他可能性（递归调用栈自动实现）**
+> 5. **剪枝优化：遇到普通字符时，如果不存在对应子节点直接返回false，避免无效搜索**
+
+```cs
+public class TrieNode
+{
+    public Dictionary<char, TrieNode> Children {get; set;}
+    public bool IsEndOfWord {get; set;}
+    
+    public TrieNode()
+    {
+        Children = new Dictionary<char, TrieNode>();
+        IsEndOfWord = false;
+    }
+}
+
+public class WordDictionary {
+    private readonly TrieNode root;
+
+    public WordDictionary() {
+        root = new TrieNode();
+    }
+    
+    public void AddWord(string word) {
+        TrieNode current = root;
+
+        foreach(char c in word)
+        {
+            if(!current.Children.ContainsKey(c))
+            {
+                current.Children[c] = new TrieNode();
+            }
+
+            current = current.Children[c];
+        }
+
+        current.IsEndOfWord = true;
+    }
+    
+    public bool Search(string word) {
+        return SearchHelper(word, 0, root);
+    }
+
+    // 辅助函数，递归处理有通配符的情况
+    private bool SearchHelper(string word, int index, TrieNode node)
+    {
+        // 已到达单词末尾，检查是否是单词结束节点
+        if(index == word.Length)
+        {
+            return node.IsEndOfWord;
+        }
+
+        char currentChar = word[index];
+
+        if(currentChar == '.')
+        {
+            // 处理通配符需要遍历所有子节点
+            foreach(var child in node.Children.Values)
+            {
+                if(SearchHelper(word, index + 1, child))
+                {
+                    // 只要有一条路径满足条件，就返回true
+                    return true;
+                }
+            }
+            return false; // 所有路径都不满足条件，就返回false
+        }
+        else
+        {
+            // 普通字符处理
+            if(!node.Children.ContainsKey(currentChar))
+            {
+                return false;
+            }
+            return SearchHelper(word, index + 1, node.Children[currentChar]);
+        }
+    }
+}
+```
+
