@@ -1659,3 +1659,253 @@ public class Solution {
     }
 }
 ```
+
+## [17. 电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/)
+
+给定一个仅包含数字 `2-9` 的字符串，返回所有它能表示的字母组合。答案可以按 **任意顺序** 返回。
+
+给出数字到字母的映射如下（与电话按键相同）。注意 1 不对应任何字母。
+
+**示例 1：**
+
+```
+输入：digits = "23"
+输出：["ad","ae","af","bd","be","bf","cd","ce","cf"]
+```
+
+**示例 2：**
+
+```
+输入：digits = ""
+输出：[]
+```
+
+**示例 3：**
+
+```
+输入：digits = "2"
+输出：["a","b","c"]
+```
+
+> **思路一：深度优先搜索+回溯。递归探索，递归函数中记录当前长度，递归终止条件是当前长度等于输入的数字长度；循环遍历当前数字对应的各个字母，在循环中调用递归函数，每次递归返回后都要移除最后一个字母并尝试其他可能。**
+
+```cs
+public class Solution
+{
+    public Dictionary<char, char[]> numToLetters = new Dictionary<char, char[]>()
+    {
+        {'2', new char[] {'a', 'b', 'c'} },
+        {'3', new char[] {'d', 'e', 'f'} },
+        {'4', new char[] {'g', 'h', 'i'} },
+        {'5', new char[] {'j', 'k', 'l'} },
+        {'6', new char[] {'m', 'n', 'o'} },
+        {'7', new char[] {'p', 'q', 'r', 's'} },
+        {'8', new char[] {'t', 'u', 'v'} },
+        {'9', new char[] {'w', 'x', 'y', 'z'} }
+    };
+
+    public IList<string> LetterCombinations(string digits)
+    {
+        IList<string> result = new List<string>();
+        if(string.IsNullOrEmpty(digits))
+        {
+            return result;
+        }
+
+        Backtrack(digits, 0, new StringBuilder(), result);
+        return result;
+    }
+
+    // 辅助函数，回溯
+    private void Backtrack(string digits, int index, StringBuilder current, IList<string> result)
+    {
+        // 终止条件：当前字符串长度 == 数字长度
+        if(index == digits.Length)
+        {
+            result.Add(current.ToString());
+            return;
+        }
+
+        char digit = digits[index];
+        if(numToLetters.ContainsKey(digit) == false)
+        {
+            return;
+        }
+
+        foreach(char c in numToLetters[digit])
+        {
+            // 遍历当前数字对应的所有字母
+            current.Append(c);
+            Backtrack(digits, index + 1, current, result); // 递归
+            current.Remove(current.Length - 1, 1); // 删除最后一个字符（回溯）
+        }
+    }
+}
+```
+
+> **思路二：广度优先搜索。用队列辅助，初始化加入一个空字符串到队列；遍历每个数字，可得到该数字对应的字母列表，依次取出队列中的组合，遍历字母列表中的每个字母，追加新字母后重新入队；当处理完所有数字时，队列中的组合即为结果。**
+
+```csharp
+public class Solution
+{
+    public Dictionary<char, char[]> numToLetters = new Dictionary<char, char[]>()
+    {
+        {'2', new char[] {'a', 'b', 'c'} },
+        {'3', new char[] {'d', 'e', 'f'} },
+        {'4', new char[] {'g', 'h', 'i'} },
+        {'5', new char[] {'j', 'k', 'l'} },
+        {'6', new char[] {'m', 'n', 'o'} },
+        {'7', new char[] {'p', 'q', 'r', 's'} },
+        {'8', new char[] {'t', 'u', 'v'} },
+        {'9', new char[] {'w', 'x', 'y', 'z'} }
+    };
+
+    public IList<string> LetterCombinations(string digits)
+    {
+        IList<string> result = new List<string>();
+        if(string.IsNullOrEmpty(digits))
+        {
+            return result;
+        }
+
+        Queue<string> queue = new Queue<string>(); // 辅助队列，用于广度优先搜索
+        queue.Enqueue(""); // 初始放入一个空字符串
+
+        foreach(char digit in digits)
+        {
+            if(numToLetters.ContainsKey(digit) == false)
+            {
+                continue;
+            }
+
+            char[] letters = numToLetters[digit]; // 当前数字对应的字母
+            int currentSize = queue.Count; // 当前队列的元素个数
+            for(int i=0; i<currentSize; i++)
+            {
+                string current = queue.Dequeue(); // 取出当前组合
+                foreach(char c in letters)
+                {
+                    // 遍历当前数字对应的每个字母，追加新字母再放入队列
+                    queue.Enqueue(current + c);
+                }
+            }
+        }
+
+        // 队列里的所有字符串就是最终结果
+        while (queue.Count > 0)
+        {
+            result.Add(queue.Dequeue());
+        }
+
+        return result;
+    }
+}
+```
+
+## [77. 组合](https://leetcode.cn/problems/combinations/)
+
+给定两个整数 `n` 和 `k`，返回范围 `[1, n]` 中所有可能的 `k` 个数的组合。
+
+你可以按 **任何顺序** 返回答案。
+
+**示例 1：**
+
+```
+输入：n = 4, k = 2
+输出：
+[
+  [2,4],
+  [3,4],
+  [2,3],
+  [1,2],
+  [1,3],
+  [1,4],
+]
+```
+
+**示例 2：**
+
+```
+输入：n = 1, k = 1
+输出：[[1]]
+```
+
+> **思路一：深度优先搜索+回溯。**
+
+```csharp
+public class Solution
+{
+    public IList<IList<int>> Combine(int n, int k)
+    {
+        IList<IList<int>> result = new List<IList<int>>();
+        Backtrack(n, k, 1, new List<int>(), result);
+        return result;
+    }
+
+    private void Backtrack(int n, int k, int start, List<int> current, IList<IList<int>> result)
+    {
+        // 回溯终止条件：当前字符串长度 == k
+        if(current.Count == k)
+        {
+            result.Add(new List<int>(current)); // 需要存current的副本到结果，而非引用
+            return;
+        }
+
+        // 遍历所有可选字符（≥start的字符）
+        for(int num = start; num <= n; num++)
+        {
+            current.Add(num); // 选择num
+            Backtrack(n, k, num + 1, current, result); // 递归下一层
+            current.RemoveAt(current.Count - 1); // 删除current中的最后一个字符（num），回溯
+        }
+    }
+}
+```
+
+> **剪枝优化：如果剩余数字不足以填满 `k` 个，提前终止递归。**
+
+```
+for (int i = start; i <= n - (k - current.Count) + 1; i++) {
+    current.Add(i);
+    Backtrack(n, k, i + 1, current, result);
+    current.RemoveAt(current.Count - 1);
+}
+```
+
+> **思路二：广度优先搜索。**
+
+```cs
+public class Solution
+{
+    public IList<IList<int>> Combine(int n, int k)
+    {
+        IList<IList<int>> result = new List<IList<int>>();
+        Queue<List<int>> queue = new Queue<List<int>>(); // 辅助队列，用于深度优先搜索
+        queue.Enqueue(new List<int>());
+
+        while(queue.Count > 0)
+        {
+            List<int> current = queue.Dequeue();
+            if(current.Count == k)
+            {
+                // 如果当前取出的数字列表长度 == 目标长度k，直接加入结果并跳过后面步骤
+                result.Add(current);
+                continue;
+            }
+
+            // 根据当前取出的数字列表，得到最小的下一个数字
+            int startNum = current.Count == 0 ? 1 : current.Last() + 1;
+            for(int num = startNum; num <= n; num ++)
+            {
+                // 遍历下一个数字的所有可能，添加到当前数字列表末尾，重新加入队列
+                List<int> newNumList = new List<int>(current);
+                newNumList.Add(num);
+                queue.Enqueue(newNumList);
+            }
+        }
+
+        return result;
+    }
+}
+```
+
