@@ -1909,3 +1909,193 @@ public class Solution
 }
 ```
 
+## [46. 全排列](https://leetcode.cn/problems/permutations/)
+
+给定一个不含重复数字的数组 `nums` ，返回其 *所有可能的全排列* 。你可以 **按任意顺序** 返回答案。
+
+**示例 1：**
+
+```
+输入：nums = [1,2,3]
+输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1]
+输出：[[0,1],[1,0]]
+```
+
+**示例 3：**
+
+```
+输入：nums = [1]
+输出：[[1]]
+```
+
+> **思路一：深度优先搜索+回溯。**
+
+```csharp
+public class Solution {
+    public IList<IList<int>> Permute(int[] nums) {
+        IList<IList<int>> result = new List<IList<int>>();
+        Backtrack(nums, 0, new List<int>(), result);
+        return result;
+    }
+
+    private void Backtrack(int[] nums, int index, List<int> current, IList<IList<int>> result) {
+        if(index == nums.Length) {
+            result.Add(new List<int>(current));
+            return;
+        }
+
+        foreach(int num in nums) {
+            if(current.Contains(num) == false) {
+                // 遍历nums中剩余的数字
+                current.Add(num); // 添加到current中
+                Backtrack(nums, index + 1, current, result); // 递归调用
+                current.RemoveAt(current.Count - 1);
+            }
+        }
+    }
+}
+```
+
+> **思路二：广度优先搜索。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> Permute(int[] nums) {
+        IList<IList<int>> result = new List<IList<int>>();
+        Queue<List<int>> queue = new Queue<List<int>>();
+        queue.Enqueue(new List<int>());
+
+        while(queue.Count > 0)
+        {
+            List<int> current = queue.Dequeue();
+
+            // 如果当前列表的长度 == 输入的nums长度，直接加入结果并跳过后面步骤
+            if(current.Count == nums.Length) {
+                result.Add(current);
+                continue;
+            }
+
+            foreach(int num in nums) {
+                // 遍历nums中每个每个元素
+                if(current.Contains(num) == false) {
+                    // 如果当前列表current中不含有，则加到后面并重新入队
+                    List<int> newNumList = new List<int>(current);
+                    newNumList.Add(num);
+                    queue.Enqueue(newNumList);
+                }
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## [39. 组合总和](https://leetcode.cn/problems/combination-sum/)
+
+给你一个 **无重复元素** 的整数数组 `candidates` 和一个目标整数 `target` ，找出 `candidates` 中可以使数字和为目标数 `target` 的 所有 **不同组合** ，并以列表形式返回。你可以按 **任意顺序** 返回这些组合。
+
+`candidates` 中的 **同一个** 数字可以 **无限制重复被选取** 。如果至少一个数字的被选数量不同，则两种组合是不同的。 
+
+对于给定的输入，保证和为 `target` 的不同组合数少于 `150` 个。
+
+**示例 1：**
+
+```
+输入：candidates = [2,3,6,7], target = 7
+输出：[[2,2,3],[7]]
+解释：
+2 和 3 可以形成一组候选，2 + 2 + 3 = 7 。注意 2 可以使用多次。
+7 也是一个候选， 7 = 7 。
+仅有这两种组合。
+```
+
+**示例 2：**
+
+```
+输入: candidates = [2,3,5], target = 8
+输出: [[2,2,2,2],[2,3,3],[3,5]]
+```
+
+**示例 3：**
+
+```
+输入: candidates = [2], target = 1
+输出: []
+```
+
+> **思路一：深度优先搜索+回溯。为了避免重复，递归函数中传入`index`作为遍历的起始下标。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> CombinationSum(int[] candidates, int target) {
+        IList<IList<int>> result = new List<IList<int>>();
+        Backtrack(candidates, target, 0, new List<int>(), result);
+        return result;
+    }
+
+    // 辅助函数，回溯
+    private void Backtrack(int[] candidates, int target, int index, List<int> current, IList<IList<int>> result) {
+        // 回溯退出条件
+        if(target < 0) {
+            return;
+        }
+        if(target == 0) {
+            // 刚好凑到目标和，current加入结果
+            result.Add(new List<int>(current));
+            return;
+        }
+
+        for (int i = index; i < candidates.Length; i++) {
+            if(candidates[i] <= target) {
+                // 遍历candidates中每个数字，如果可以用来凑数（比target小）就加入current
+                current.Add(candidates[i]);
+                Backtrack(candidates, target - candidates[i], i, current, result); // 递归调用
+                current.RemoveAt(current.Count - 1); // 删除最后一个元素，回溯
+            }
+        }
+    }
+}
+```
+
+> **思路二：广度优先搜索。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> CombinationSum(int[] candidates, int target) {
+        IList<IList<int>> result = new List<IList<int>>();
+        Queue<(List<int>, int, int)> queue = new Queue<(List<int>, int, int)>();
+        queue.Enqueue((new List<int>(), 0, 0)); // (当前组合, 当前总和, 起始下标)
+
+        while(queue.Count > 0) {
+            var (current, sum, start) = queue.Dequeue();
+
+            if(sum > target) {
+                continue;
+            }
+            if(sum == target) {
+                result.Add(current);
+                continue;
+            }
+
+            for (int i = start; i < candidates.Length; i++) {
+                if(candidates[i] <= target - sum) {
+                    // 剪枝：只有 sum + num <= target 才入队
+                    List<int> newNumList = new List<int>(current);
+                    newNumList.Add(candidates[i]);
+                    queue.Enqueue((newNumList, sum + candidates[i], i)); // 限制下一次从 i 开始选，避免重复组合
+                }
+            }
+        }
+
+        return result;
+    }
+}
+```
+
