@@ -2099,3 +2099,63 @@ public class Solution {
 }
 ```
 
+## [52. N 皇后 II](https://leetcode.cn/problems/n-queens-ii/)
+
+**n 皇后问题** 研究的是如何将 `n` 个皇后放置在 `n × n` 的棋盘上，并且使皇后彼此之间不能相互攻击。
+
+给你一个整数 `n` ，返回 **n 皇后问题** 不同的解决方案的数量。
+
+**示例 1：**
+
+```
+输入：n = 4
+输出：2
+解释：如上图所示，4 皇后问题存在两个不同的解法。
+```
+
+**示例 2：**
+
+```
+输入：n = 1
+输出：1
+```
+
+> **思路：深度优先搜索+回溯。回溯递归函数中传入已安排的行数，以及用于记录列和两个对角线占用情况的数据结构。**
+
+```cs
+public class Solution {
+    public int TotalNQueens(int n) {
+        int result = 0;
+        Backtrack(n, 0, new bool[n], new List<int>(), new List<int>(), ref result);
+        return result;
+    }
+
+    // row-上个放置的皇后所在的行索引
+    // rows-行的占用情况；cols-列的占用情况
+    // diag1-主对角线的占用情况；diag2-副对角线的占用情况
+    private void Backtrack(int n, int row, bool[] cols, List<int> diag1, List<int> diag2, ref int result) {
+        if(row == n) {
+            result ++;
+            return;
+        }
+
+        for(int i=0; i<n; i++) {
+            int d1 = row - i; // 对角线1的标识
+            int d2 = row + i; // 对角线2的标识
+
+            if(cols[i] == false && !diag1.Contains(d1) && !diag2.Contains(d2)) {
+                // 标记列和主、副对角线为占用
+                cols[i] = true;
+                diag1.Add(d1);
+                diag2.Add(d2);
+                Backtrack(n, row + 1, cols, diag1, diag2, ref result); // 递归调用
+                // 回溯复原，探索其他可能
+                cols[i] = false;
+                diag1.Remove(d1);
+                diag2.Remove(d2);
+            }
+        }
+    }
+}
+```
+
