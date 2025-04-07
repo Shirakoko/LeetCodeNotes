@@ -1,5 +1,7 @@
 # LeetCode经典150题做题笔记（一）
 
+# 【数组/字符串】
+
 ## [88.合并两个有需数组](https://leetcode.cn/problems/merge-sorted-array?envType=study-plan-v2&envId=top-interview-150)
 
 给你两个按 **非递减顺序** 排列的整数数组 `nums1` 和 `nums2`，另有两个整数 `m` 和 `n` ，分别表示 `nums1` 和 `nums2` 中的元素数目。
@@ -2020,6 +2022,8 @@ public class Solution {
 }
 ```
 
+# 【双指针】
+
 ## [125. 验证回文串](https://leetcode.cn/problems/valid-palindrome/)
 
 如果在将所有大写字符转换为小写字符、并移除所有非字母数字字符之后，短语正着读和反着读都一样。则可以认为该短语是一个 **回文串** 。
@@ -2455,6 +2459,8 @@ public class Solution {
 }
 ```
 
+# 【滑动窗口】
+
 ## [209. 长度最小的子数组](https://leetcode.cn/problems/minimum-size-subarray-sum/)
 
 给定一个含有 `n` 个正整数的数组和一个正整数 `target` **。**
@@ -2698,6 +2704,8 @@ public class Solution {
     }
 }
 ```
+
+# 【矩阵】
 
 ## [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
 
@@ -3391,6 +3399,8 @@ public class Solution {
     }
 }
 ```
+
+# 【哈希表】
 
 ## [383. 赎金信](https://leetcode.cn/problems/ransom-note/)
 
@@ -4212,6 +4222,8 @@ public class Solution {
 }
 ```
 
+# 【区间】
+
 ## [228. 汇总区间](https://leetcode.cn/problems/summary-ranges/)
 
 给定一个  **无重复元素** 的 **有序** 整数数组 `nums` 。
@@ -4514,6 +4526,8 @@ public class Solution {
     }
 }
 ```
+
+# 【栈】
 
 ## [20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/)
 
@@ -4994,6 +5008,8 @@ public class Solution {
     }
 }
 ```
+
+# 【链表】
 
 ## [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
 
@@ -6135,6 +6151,8 @@ public class LRUCache {
     }
 }
 ```
+
+# 【二叉树】
 
 ## [104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
 
@@ -7278,6 +7296,8 @@ public class Solution
     }
 }
 ```
+
+# 【二叉树层次遍历】
 
 ## [199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
 

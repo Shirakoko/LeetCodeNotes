@@ -1,5 +1,7 @@
 # LeetCode高频150题刷题记录（二）
 
+# 【二叉搜索树】
+
 ## [530. 二叉搜索树的最小绝对差](https://leetcode.cn/problems/minimum-absolute-difference-in-bst/)
 
 给你一个二叉搜索树的根节点 `root` ，返回 **树中任意两不同节点值之间的最小差值** 。
@@ -149,6 +151,8 @@ public class Solution {
     }
 }
 ```
+
+【图】
 
 ## [200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)
 
@@ -827,9 +831,11 @@ public class Solution
 }
 ```
 
+# 【图的广度优先搜索】
+
 ## [909. 蛇梯棋](https://leetcode.cn/problems/snakes-and-ladders/)
 
-给你一个大小为 `n x n` 的整数矩阵 `board` ，方格按从 `1` 到 `n2` 编号，编号遵循 [转行交替方式](https://baike.baidu.com/item/牛耕式转行书写法/17195786) ，**从左下角开始** （即，从 `board[n - 1][0]` 开始）的每一行改变方向。
+给你一个大小为 `n x n` 的整数矩阵 `board` ，方格按从 `1` 到 `n2` 编号，编号遵循 转行交替方式，**从左下角开始** （即，从 `board[n - 1][0]` 开始）的每一行改变方向。
 
 你一开始位于棋盘上的方格 `1`。每一回合，玩家需要从当前方格 `curr` 开始出发，按下述要求前进：
 
@@ -1269,6 +1275,8 @@ public class Solution
 }
 ```
 
+# 【字典树】
+
 ## [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
 
 **[Trie](https://baike.baidu.com/item/字典树/9825209?fr=aladdin)**（发音类似 "try"）或者说 **前缀树** 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。
@@ -1659,6 +1667,8 @@ public class Solution {
     }
 }
 ```
+
+# 【回溯】
 
 ## [17. 电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/)
 
@@ -2155,6 +2165,231 @@ public class Solution {
                 diag2.Remove(d2);
             }
         }
+    }
+}
+```
+
+## [22. 括号生成](https://leetcode.cn/problems/generate-parentheses/)
+
+数字 `n` 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 **有效的** 括号组合。
+
+**示例 1：**
+
+```
+输入：n = 3
+输出：["((()))","(()())","(())()","()(())","()()()"]
+```
+
+**示例 2：**
+
+```
+输入：n = 1
+输出：["()"]
+```
+
+> **思路：递归回溯。**
+>
+> 1. **回溯：递归尝试所有可能的括号组合。**
+> 2. **约束条件：**
+>    - **左括号数 ≤ `n`（保证数量足够）。**
+>    - **右括号数 ≤ 左括号数（保证有效性）。**
+> 3. **终止条件：当组合长度达到 `2n` 时，保存结果。**
+
+```csharp
+public class Solution {
+    public IList<string> GenerateParenthesis(int n) {
+        IList<string> result = new List<string>();
+        Backtrack(n, 0, 0, new StringBuilder(), result);
+        return result;
+    }
+
+    private void Backtrack(int n, int leftCount, int rightCount, StringBuilder current, IList<string> result) {
+        if (current.Length == 2 * n) {
+            // 如果当前组合长度已达2n（即左右括号各n个），说明已生成一个有效组合
+            result.Add(current.ToString());
+            return;
+        }
+
+        // 添加左括号的条件：左括号数量未达到n（即还可以添加左括号）
+        if (leftCount < n) {
+            current.Append('(');
+            Backtrack(n, leftCount + 1, rightCount, current, result);
+            current.Remove(current.Length - 1, 1);
+        }
+
+        // 尝试添加右括号的条件：右括号数量必须小于左括号数量（保证有效性）
+        if (rightCount < leftCount) {
+            current.Append(')');
+            Backtrack(n, leftCount, rightCount + 1, current, result);
+            current.Remove(current.Length - 1, 1);
+        }
+    }
+}
+```
+
+## [79. 单词搜索](https://leetcode.cn/problems/word-search/)
+
+给定一个 `m x n` 二维字符网格 `board` 和一个字符串单词 `word` 。如果 `word` 存在于网格中，返回 `true` ；否则，返回 `false` 。
+
+单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。
+
+**示例 1：**
+
+```
+输入：board = [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], word = "ABCCED"
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：board = [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], word = "ABCB"
+输出：false
+```
+
+> **思路一：深度优先搜索+回溯。**
+>
+> 1. **遍历起点：**
+>    - **遍历网格中每个单元格作为可能的起点，只有当单元格字符与单词首字符匹配时才进行搜索**
+> 2. **递归搜索：**
+>    - **从当前单元格向四个方向（上、下、左、右）递归搜索**
+>    - **使用回溯法标记已访问的单元格（临时修改为'*'）**
+>    - **搜索完成后恢复单元格原始值**
+> 3. **终止条件：**
+>    - **成功条件：已匹配完整个单词（index == word.Length）**
+>    - **失败条件：越界或字符不匹配**
+
+```cs
+public class Solution {
+    public bool Exist(char[][] board, string word) {
+        int m = board.Length;
+        int n = board[0].Length;
+
+        // 遍历每个可能的起点
+        for(int i=0; i<m; i++) {
+            for(int j=0; j<n; j++) {
+                if (Backtrack(board, word, 0, i, j)) {
+                    // 只要找到一条路，就算成功
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // 用于递归回溯的辅助函数，index-要匹配的字符、(row, col)-匹配位置
+    private bool Backtrack(char[][] board, string word, int index, int row, int col) {
+        if(index == word.Length) {
+            return true;
+        }
+
+        if(row < 0 || row >= board.Length || col < 0 || col >= board[0].Length) {
+            // 不处理越界坐标
+            return false;
+        }
+
+        if(board[row][col] != word[index]) {
+            // 不匹配（包含已被'*'标记）
+            return false;
+        }
+
+        char temp = board[row][col];
+        board[row][col] = '*'; // 标记
+
+        // 递归查找四个方向，只要有一个方向匹配，就算找到
+        bool found = Backtrack(board, word, index+1, row-1, col)  // 左
+                   ||Backtrack(board, word, index+1, row+1, col)  // 右
+                   ||Backtrack(board, word, index+1, row, col-1)  // 上
+                   ||Backtrack(board, word, index+1, row, col+1); // 下
+        
+        // 回溯，恢复字符
+        board[row][col] = temp;
+
+        return found;
+    }
+}
+```
+
+> **思路二：广度优先搜索（不是最优方案）。**
+>
+> 1. **遍历起点：**
+>    - **遍历所有可能的起点，只考虑与单词首字符匹配的起点**
+> 2. **队列初始化：**
+>    - **使用队列存储搜索状态（位置坐标、已匹配字符索引、访问标记）**
+>    - **每个状态携带独立的访问标记数组**
+> 3. **广度优先扩展：**
+>    - **从队列取出当前状态**
+>    - **向四个方向扩展新状态**
+>    - **确保新位置在网格内且未被访问过**
+>    - **字符匹配时才加入队列**
+> 4. **终止条件：**
+>    - **成功条件：已匹配完整个单词**
+>    - **失败条件：队列耗尽仍未找到**
+
+```csharp
+public class Solution {
+    public bool Exist(char[][] board, string word) {
+        int m = board.Length;
+        int n = board[0].Length;
+
+        // 遍历每个可能的起点
+        for(int i=0; i<m; i++) {
+            for(int j=0; j<n; j++) {
+                if(board[i][j] == word[0] && BFS(board, word, i, j)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // 辅助函数，用于广度优先搜索
+    private bool BFS(char[][] board, string word, int row, int col) {
+        int m = board.Length, n = board[0].Length;
+        // 行、列、上个匹配的字符的索引、标记坐标是否被访问的二维数组
+        var queue = new Queue<(int, int, int, bool[,])>();
+        // 标记坐标是否被访问
+        var initialVisited = new bool[m, n];
+        initialVisited[row, col] = true;
+        
+        queue.Enqueue((row, col, 0, initialVisited));
+
+        // 四个方向的向量
+        int[][] directions = new int[][] { 
+            new int[] { -1, 0 }, // 上
+            new int[] { 1, 0 },  // 下
+            new int[] { 0, -1 }, // 左
+            new int[] { 0, 1 }   // 右
+        };
+
+        while(queue.Count > 0) {
+            var (i, j, index, visited) = queue.Dequeue();
+            if(index == word.Length - 1) {
+                return true;
+            }
+
+            // 遍历四个方向
+            foreach (var dir in directions) {
+                int newRow = i + dir[0];
+                int newCol = j + dir[1];
+
+                if(newRow < 0 || newRow >= m || newCol < 0 || newCol >= n) {
+                    // 跳过不合法的坐标
+                    continue;
+                }
+
+                if(visited[newRow, newCol] == false && board[newRow][newCol] == word[index+1]) {
+                    // 为每个新状态创建独立的visited数组
+                    var newVisited = (bool[,])visited.Clone();
+                    newVisited[newRow, newCol] = true;
+                    queue.Enqueue((newRow, newCol, index+1, newVisited));
+                }
+            }
+        }
+
+        return false;
     }
 }
 ```
