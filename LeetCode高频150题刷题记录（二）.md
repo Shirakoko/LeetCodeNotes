@@ -2609,3 +2609,119 @@ public class Solution {
 }
 ```
 
+# 【Kadane算法】
+
+## [53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)
+
+给你一个整数数组 `nums` ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+
+**子数组**是数组中的一个连续部分。
+
+**示例 1：**
+
+```
+输入：nums = [-2,1,-3,4,-1,2,1,-5,4]
+输出：6
+解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+```
+
+**示例 2：**
+
+```
+输入：nums = [1]
+输出：1
+```
+
+**示例 3：**
+
+```
+输入：nums = [5,4,-1,7,8]
+输出：23
+```
+
+> **思路：Kadane算法。**
+>
+> 1. **初始化：`maxCurrent` 和 `maxGlobal` 设为数组第一个元素。**
+> 2. **遍历数组：从第二个元素开始，计算以当前元素结尾的最大子数组和（`maxCurrent`），并更新全局最大值（`maxGlobal`）。**
+> 3. **返回结果：最终 `maxGlobal` 就是整个数组的最大子数组和。**
+
+```cs
+public class Solution {
+    public int MaxSubArray(int[] nums) {
+        int count= nums.Length;
+
+        int maxCurrent = nums[0]; // 当前元素结尾的最大子数组和
+        int maxGlobal = nums[0]; // 全局最大子数组和
+
+        for(int i=1; i<count; i++) {
+            maxCurrent = Math.Max(nums[i], maxCurrent + nums[i]); // 决定要不要带上前面积累的和
+            maxGlobal = Math.Max(maxGlobal, maxCurrent); // 更新全局最大子数组和
+        }
+
+        return maxGlobal;
+    }
+}
+```
+
+## [918. 环形子数组的最大和](https://leetcode.cn/problems/maximum-sum-circular-subarray/)
+
+给定一个长度为 `n` 的**环形整数数组** `nums` ，返回 *`nums` 的非空 **子数组** 的最大可能和* 。
+
+**环形数组** 意味着数组的末端将会与开头相连呈环状。形式上， `nums[i]` 的下一个元素是 `nums[(i + 1) % n]` ， `nums[i]` 的前一个元素是 `nums[(i - 1 + n) % n]` 。
+
+**子数组** 最多只能包含固定缓冲区 `nums` 中的每个元素一次。形式上，对于子数组 `nums[i], nums[i + 1], ..., nums[j]` ，不存在 `i <= k1, k2 <= j` 其中 `k1 % n == k2 % n` 。
+
+**示例 1：**
+
+```
+输入：nums = [1,-2,3,-2]
+输出：3
+解释：从子数组 [3] 得到最大和 3
+```
+
+**示例 2：**
+
+```
+输入：nums = [5,-3,5]
+输出：10
+解释：从子数组 [5,5] 得到最大和 5 + 5 = 10
+```
+
+**示例 3：**
+
+```
+输入：nums = [3,-2,2,-3]
+输出：3
+解释：从子数组 [3] 和 [3,-2,2] 都可以得到最大和 3
+```
+
+> **思路一：暴力解法（会超时），在每个起始位置都做一次Kadane算法求最大子数组和。**
+
+```cs
+public class Solution {
+    public int MaxSubarraySumCircular(int[] nums) {
+        int result = int.MinValue;
+        // 对每个位置求最大子数组和
+        for(int i=0; i<nums.Length; i++) {
+            result = Math.Max(result, MaxSubarraySum(nums, i));
+        }
+        return result;
+    }
+
+    private int MaxSubarraySum(int[] nums, int startPos) {
+        int n = nums.Length;
+        int maxCurrent = nums[startPos];
+        int maxGlobal = nums[startPos];
+        int pos = startPos; // 记录当前索引
+
+        for (int i = 1; i < n; i++) {
+            pos = (pos + 1) % n; // 下一个元素的位置
+            maxCurrent = Math.Max(nums[pos], maxCurrent + nums[pos]);
+            maxGlobal = Math.Max(maxGlobal, maxCurrent);
+        }
+        return maxGlobal;
+    }
+}
+```
+
+思路二：取反。**环形情况**的最大子数组和可能跨越数组的首尾，比如 `[5, -3, 5]` 的最大子数组可以是 `[5, 5]`（首尾相连），这种情况相当于数组总和减去中间的最小子数组和 `[-3]`。
