@@ -2724,4 +2724,107 @@ public class Solution {
 }
 ```
 
-思路二：取反。**环形情况**的最大子数组和可能跨越数组的首尾，比如 `[5, -3, 5]` 的最大子数组可以是 `[5, 5]`（首尾相连），这种情况相当于数组总和减去中间的最小子数组和 `[-3]`。
+> **思路二：取反。环形情况的最大子数组和可能跨越数组的首尾，比如 `[5, -3, 5]` 的最大子数组可以是 `[5, 5]`（首尾相连），这种情况相当于数组总和减去中间的最小子数组和 `[-3]`。**
+
+```cs
+public class Solution {
+    public int MaxSubarraySumCircular(int[] nums) {
+        int total = nums[0]; // 记录数组总和
+        int maxCurrent = nums[0];
+        int maxGlobal = nums[0]; // 最大子数组和
+        int minCurrent = nums[0];
+        int minGlobal = nums[0]; // 最小子数组和
+
+        for(int i=1; i<nums.Length; i++) {
+            maxCurrent = Math.Max(nums[i], maxCurrent + nums[i]);
+            maxGlobal = Math.Max(maxGlobal, maxCurrent);
+
+            minCurrent = Math.Min(nums[i], minCurrent + nums[i]);
+            minGlobal = Math.Min(minGlobal, minCurrent);
+
+            total += nums[i];
+        }
+
+        if(maxGlobal < 0) {
+            return maxGlobal;
+        }
+
+        return Math.Max(maxGlobal, total - minGlobal);
+    }
+}
+```
+
+# 【二分查找】
+
+## [35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/)
+
+给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。
+
+请必须使用时间复杂度为 `O(log n)` 的算法。
+
+**示例 1:**
+
+```
+输入: nums = [1,3,5,6], target = 5
+输出: 2
+```
+
+**示例 2:**
+
+```
+输入: nums = [1,3,5,6], target = 2
+输出: 1
+```
+
+**示例 3:**
+
+```
+输入: nums = [1,3,5,6], target = 7
+输出: 4
+```
+
+> **思路一：二分查找，时间复杂度为`O(log n)`**。
+
+```cs
+public class Solution {
+    public int SearchInsert(int[] nums, int target) {
+        return SearchInserHelper(nums, target, 0, nums.Length - 1);
+    }
+
+    private int SearchInserHelper(int[] nums, int target, int start, int end) {
+        if(start == end) {
+            if(nums[start] >= target) {
+                return start;
+            } else {
+                return start + 1;
+            }
+        }
+        int mid = start + (end - start) / 2;
+        if(target > nums[mid]) {
+            return SearchInserHelper(nums, target, mid+1, end);
+        } else {
+            return SearchInserHelper(nums, target, start, mid);
+        }
+    }
+}
+```
+
+> **思路二：遍历数组，记录比`target`小的最后一个元素的下标，时间复杂度为`O(n)`。**
+
+```cs
+public class Solution {
+    public int SearchInsert(int[] nums, int target) {
+        int smallerIndex = -1;
+        for(int i=0; i<nums.Length; i++) {
+            if(nums[i] < target) {
+                smallerIndex = i;
+            } else if(nums[i] == target) {
+                return i;
+            }
+        }
+
+        return smallerIndex + 1;
+    }
+}
+```
+
