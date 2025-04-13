@@ -3306,3 +3306,223 @@ public class Solution {
 }
 ```
 
+## [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
+
+给定两个大小分别为 `m` 和 `n` 的正序（从小到大）数组 `nums1` 和 `nums2`。请你找出并返回这两个正序数组的 **中位数** 。
+
+算法的时间复杂度应该为 `O(log (m+n))` 。
+
+**示例 1：**
+
+```
+输入：nums1 = [1,3], nums2 = [2]
+输出：2.00000
+解释：合并数组 = [1,2,3] ，中位数 2
+```
+
+**示例 2：**
+
+```
+输入：nums1 = [1,2], nums2 = [3,4]
+输出：2.50000
+解释：合并数组 = [1,2,3,4] ，中位数 (2 + 3) / 2 = 2.5
+```
+
+> **思路：每次递归中，比较两个数组的第 `index/2` 个元素（基于下标），元素较小的那个数组的前 `index/2` 个元素不可能包含第 `index` 个的元素，因此可以排除这部分元素。**
+>
+> **主方法：如果总长度为奇数，直接返回第k小的数（k为总长度的一半加1）；如果总长度为偶数，返回中间两个数的平均值。**
+>
+> **辅助方法：**
+>
+> - **递归处理：首先确保第一个数组是较短的数组。如果其中一个数组长度为0，直接返回另一个数组的第k小的数。如果`index`为0，返回两个数组当前起始位置的最小值。**
+> - **比较和排除：比较两个数组的第`index/2`，较小的那个数组的前`index/2`个元素可以排除，继续在剩下的部分中递归查找第`index- index/2`小的数。**
+
+```cs
+public class Solution {
+    public double FindMedianSortedArrays(int[] nums1, int[] nums2) {
+        int m = nums1.Length;
+        int n = nums2.Length;
+        int total = m + n;
+        if(total % 2 == 1) {
+            // 如果总长度是奇数，直接返回中间的那个数
+            return (double)FindIndexInSortedArrays(nums1, 0, m, nums2, 0, n, total/2);
+        } else {
+            int left = FindIndexInSortedArrays(nums1, 0, m, nums2, 0, n, total/2 - 1);
+            int right = FindIndexInSortedArrays(nums1, 0, m, nums2, 0, n, total/2);
+            return (left+right)/2.0;
+        }
+    }
+
+    // 辅助函数，找到两个数组合并后的升序数组中指定下标的数
+    private int FindIndexInSortedArrays(int[] nums1, int start1, int len1, int[] nums2, int start2, int len2, int index) {
+        if(len1 > len2) {
+            // 确保nums1是较短的数组
+            return FindIndexInSortedArrays(nums2, start2, len2, nums1, start1, len1, index);
+        }
+
+        if(len1 == 0) {
+            // 如果nums1已经为空，直接在nums2中返回第index个元素
+            return nums2[start2 + index];
+        }
+
+        if(index == 0) {
+            // 如果index为0，直接返回两个数组第一个元素中更小的
+            return Math.Min(nums1[start1], nums2[start2]);
+        }
+
+        // 计算两个数组的中间位置下标
+        int mid1 = start1 + Math.Min(len1, (index+1) / 2) - 1;
+        int mid2 = start2 + Math.Min(len2, (index+1) / 2) - 1;
+
+        if(nums1[mid1] > nums2[mid2]) {
+            // 排除nums2的前index/2个元素，继续在剩余部分中寻找第index - (mid2 - start2 + 1)小的元素
+            return FindIndexInSortedArrays(
+                nums1, start1, len1, 
+                nums2, mid2 + 1, len2 - (mid2 - start2 + 1), 
+                index - (mid2 - start2 + 1));
+        } else {
+            // 排除nums1的前index/2个元素，继续在剩余部分中寻找第index - (mid1 - start1 + 1)小的元素
+            return FindIndexInSortedArrays(
+                nums1, mid1 + 1, len1 - (mid1 - start1 + 1), 
+                nums2, start2, len2, 
+                index - (mid1 - start1 + 1));
+        }
+    }
+}
+```
+
+# 【堆】
+
+## [215. 数组中的第K个最大元素](https://leetcode.cn/problems/kth-largest-element-in-an-array/)
+
+给定整数数组 `nums` 和整数 `k`，请返回数组中第 `**k**` 个最大的元素。
+
+请注意，你需要找的是数组排序后的第 `k` 个最大的元素，而不是第 `k` 个不同的元素。
+
+你必须设计并实现时间复杂度为 `O(n)` 的算法解决此问题。
+
+**示例 1:**
+
+```
+输入: [3,2,1,5,6,4], k = 2
+输出: 5
+```
+
+**示例 2:**
+
+```
+输入: [3,2,3,1,2,4,5,5,6], k = 4
+输出: 4
+```
+
+> **思路一：堆排序，自下而上建大根堆，循环弹出堆顶元素`k-1`次并调整堆，最后得到的堆顶元素就是第`k`大元素。**
+
+```cs
+public class Solution {
+    public int FindKthLargest(int[] nums, int k) {
+        int heapSize = nums.Length;
+
+        // 自下而上建堆
+        for(int i = heapSize/2 - 1; i>=0; i--) {
+            // 从最后一个非叶子节点开始，对每个节点进行下沉操作
+            SiftDown(nums, heapSize, i);
+        }
+
+        // 弹出堆顶元素k-1次，剩下的堆顶就是第k大的元素
+        for(int i=0; i<k-1; i++) {
+            // 交换堆顶元素和最后一个元素，并减少堆的大小，以模拟弹出操作
+            Swap(nums, 0, heapSize - 1);
+            heapSize --;
+
+            // 堆顶元素下沉，重新变成大根堆
+            SiftDown(nums, heapSize, 0);
+        }
+
+        return nums[0];
+    }
+
+    // 辅助函数：大顶堆下沉操作，O(logN)，len-数组长度，index-目标节点索引
+    private void SiftDown(int[] arr, int len, int index) {
+        int lagest = index; // index和左右子树中最大的那个数
+        int left = 2*index+1;
+        int right = 2*index+2;
+
+        if(left < len && arr[left] > arr[lagest]) {
+            lagest = left;
+        }
+
+        if(right < len && arr[right] > arr[lagest]) {
+            lagest = right;
+        }
+
+        if(lagest != index) {
+            // 如果lagest是左子树或右子数，当前节点需要和该子节点交换
+            Swap(arr, index, lagest);
+            // 递归，继续下沉
+            SiftDown(arr, len, lagest);
+        }
+    }
+
+    // 辅助函数：交换数组中两个元素
+    private void Swap(int[]arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
+```
+
+> **思路二：快速排序。**
+>
+> 1. **分区：选择一个基准值（pivot），将数组分为两部分：**
+>    - - **左边 ≥ pivot**
+>      - **右边 < pivot**
+> 2. **递归选择**
+>    - **如果基准值的索引正好是 `k-1`，直接返回。**
+>    - **如果基准值索引 < `k-1`，在右半部分继续查找，否则在左半部分查找。**
+
+```cs
+public class Solution {
+    public int FindKthLargest(int[] nums, int k) {
+        int left = 0;
+        int right = nums.Length - 1;
+        while(true) {
+            int pivotIndex = Partition(nums, left, right);
+            if(pivotIndex == k - 1) {
+                return nums[pivotIndex];
+            }
+            if(pivotIndex < k - 1) {
+                // 在右半部分继续寻找
+                left = pivotIndex + 1;
+            } else {
+                // 在左半部分继续寻找
+                right = pivotIndex - 1;
+            }
+        }
+    }
+
+    // 辅助函数：分区，并返回基准值pivot的索引
+    private int Partition(int nums, int left, int right) {
+        int pivot = nums[right]; // 选择最右边元素作为基准值
+        int i = left;
+        for(int j = left; j<right; j++) {
+            if(nums[j] >= pivot) {
+                // 将≥pivot的元素移动到左侧
+                Swap(nums, i, j);
+                i++;
+            }
+        }
+
+        Swap(nums, i, right); // 将pivot的值放到正确位置i
+        return i;
+    }
+
+    // 辅助函数：交换数组中两个元素
+    private void Swap(int[]arr, int i, int j) {
+        int temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
+```
+
