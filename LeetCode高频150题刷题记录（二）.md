@@ -3871,3 +3871,189 @@ public class Solution {
 }
 ```
 
+## [137. 只出现一次的数字 II](https://leetcode.cn/problems/single-number-ii/)
+
+给你一个整数数组 `nums` ，除某个元素仅出现 **一次** 外，其余每个元素都恰出现 **三次 。**请你找出并返回那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法且使用常数级空间来解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [2,2,3,2]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1,0,1,0,1,99]
+输出：99
+```
+
+> **思路：统计所有数字的每一位上1出现的总次数，对于出现三次的数字，每位上的1会出现3次，对于只出现一次的数字，每位上的1只会出现1次或0次，因此每位上的1出现的次数对3取模就得到只出现1次的数字在该位的值。**
+
+```cs
+public class Solution {
+    public int SingleNumber(int[] nums) {
+        int result = 0;
+        for(int i=0; i<32; i++) {
+            // 遍历int32位中的每一位
+
+            // 遍历所有数字，统计该位中1出现的次数
+            int sum = 0; 
+            foreach(int num in nums) {
+                sum += (num >> i) & 1;
+            }
+
+            // 对3取模得到只出现一次的数字在该位的值，赋在result的对应位上
+            if(sum % 3 != 0) {
+                result = result | (1<<i);
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## [201. 数字范围按位与](https://leetcode.cn/problems/bitwise-and-of-numbers-range/)
+
+给你两个整数 `left` 和 `right` ，表示区间 `[left, right]` ，返回此区间内所有数字 **按位与** 的结果（包含 `left` 、`right` 端点）。
+
+**示例 1：**
+
+```
+输入：left = 5, right = 7
+输出：4
+```
+
+**示例 2：**
+
+```
+输入：left = 0, right = 0
+输出：0
+```
+
+**示例 3：**
+
+```
+输入：left = 1, right = 2147483647
+输出：0
+```
+
+> **思路一：从`m`到`n`的所有数字的按位与结果等于 `m` 和 `n` 的公共前缀后面补零，逐步右移 `m` 和 `n`，直到它们相等，记录右移的次数；然后左移相同的次数，得到公共前缀。**
+
+```cs
+public class Solution {
+    public int RangeBitwiseAnd(int left, int right) {
+        int shift = 0; // 记录右移的位数
+
+        // left和right不断右移，直到相等
+        while(left != right) {
+            left = left >> 1;
+            right = right >> 1;
+            shift ++;
+        }
+
+        // 最后left（right）是原来left和right的公共前缀，再左移shift位得到按位与结果
+        return left << shift;
+    }
+}
+```
+
+> **思路二：Brian Kernighan算法，每次对`n`和 `number−1` 之间进行按位与运算后，`number`中最右边的1会被抹去变成0，因此可以不断清除`n`最右边的 1，直到它小于或等于`m`，最终得到的`n`就是公共前缀后面补0。**
+
+```cs
+public class Solution {
+    public int RangeBitwiseAnd(int left, int right) {
+        while(left < right) {
+            right = right & (right - 1);
+        }
+
+        return right;
+    }
+}
+```
+
+## [9. 回文数](https://leetcode.cn/problems/palindrome-number/)
+
+给你一个整数 `x` ，如果 `x` 是一个回文整数，返回 `true` ；否则，返回 `false` 。
+
+回文数是指正序（从左向右）和倒序（从右向左）读都是一样的整数。
+
+- 例如，`121` 是回文，而 `123` 不是。
+
+**示例 1：**
+
+```
+输入：x = 121
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：x = -121
+输出：false
+解释：从左向右读, 为 -121 。 从右向左读, 为 121- 。因此它不是一个回文数。
+```
+
+**示例 3：**
+
+```
+输入：x = 10
+输出：false
+解释：从右向左读, 为 01 。因此它不是一个回文数。
+```
+
+> **思路一：转换成字符串，变成判断是否是回文字符串的问题。**
+
+```cs
+public class Solution {
+    public bool IsPalindrome(int x) {
+        if (x < 0) {
+            return false;
+        }
+        else if (x < 10) {
+            return true;
+        }
+
+        string str = x.ToString();
+        int left = 0; int right = str.Length - 1;
+        while(left < right) {
+            if (str[left] != str[right]) {
+                return false;
+            }
+            left++; right--;
+        }
+
+        return true;
+    }
+}
+```
+
+> **思路二：反转数字，反转后的结果与原数字比较是否相等。**
+
+```cs
+public class Solution {
+    public bool IsPalindrome(int x) {
+        if (x < 0) {
+            return false;
+        }
+        else if (x < 10) {
+            return true;
+        }
+
+        int originalNum = x;
+        int reversedNum = 0;
+        while(x > 0) {
+            reversedNum = reversedNum * 10 + x % 10; // 得到最后一位，赋给reversedNum
+            x = x / 10; // 丢弃最后一位
+        }
+
+        return reversedNum == originalNum;
+    }
+}
+```
+
