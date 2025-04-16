@@ -3526,3 +3526,227 @@ public class Solution {
 }
 ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+## [295. 数据流的中位数](https://leetcode.cn/problems/find-median-from-data-stream/)
+
+**中位数**是有序整数列表中的中间值。如果列表的大小是偶数，则没有中间值，中位数是两个中间值的平均值。
+
+- 例如 `arr = [2,3,4]` 的中位数是 `3` 。
+- 例如 `arr = [2,3]` 的中位数是 `(2 + 3) / 2 = 2.5` 。
+
+实现 MedianFinder 类:
+
+- `MedianFinder() `初始化 `MedianFinder` 对象。
+- `void addNum(int num)` 将数据流中的整数 `num` 添加到数据结构中。
+- `double findMedian()` 返回到目前为止所有元素的中位数。与实际答案相差 `10-5` 以内的答案将被接受。
+
+**示例 1：**
+
+```
+输入
+["MedianFinder", "addNum", "addNum", "findMedian", "addNum", "findMedian"]
+[[], [1], [2], [], [3], []]
+输出
+[null, null, null, 1.5, null, 2.0]
+
+解释
+MedianFinder medianFinder = new MedianFinder();
+medianFinder.addNum(1);    // arr = [1]
+medianFinder.addNum(2);    // arr = [1, 2]
+medianFinder.findMedian(); // 返回 1.5 ((1 + 2) / 2)
+medianFinder.addNum(3);    // arr[1, 2, 3]
+medianFinder.findMedian(); // return 2.0
+```
+
+> **思路一：用`List.Sort()`杀死比赛，但是会超时。**
+
+```cs
+public class MedianFinder {
+    List<int> nums;
+
+    public MedianFinder() {
+        nums = new List<int>();
+    }
+    
+    public void AddNum(int num) {
+        nums.Add(num);
+        nums.Sort(); // 升序排序
+    }
+    
+    public double FindMedian() {
+        int count = nums.Count;
+        if(count % 2 == 1) {
+            // 奇数个元素
+            return (double)nums[count/2];
+        } else {
+            // 偶数个元素
+            return (nums[count/2] + nums[count/2 - 1])/2.0;
+        }
+    }
+}
+```
+
+> **思路二：双堆法。**
+>
+> 1. **`maxHeap`（大顶堆）：存储 较小的一半数，堆顶是最大值。**
+> 2. **`minHeap`（小顶堆）：存储 较大的一半数，堆顶是最小值。**
+> 3. **保证 `maxHeap` 的大小 等于或比 `minHeap` 大 1（这样中位数可以直接从堆顶获取）。**
+> 4. **插入新数时，动态调整两个堆的平衡。**
+
+```cs
+public class MedianFinder {
+    PriorityQueue<int, int> maxHeap; // 大顶堆（储存较小的一半）
+    PriorityQueue<int, int> minHeap; // 小顶堆（储存较大的一半）
+
+    public MedianFinder() {
+        maxHeap = new PriorityQueue<int, int>(Comparer<int>.Create((x, y) => y.CompareTo(x))); // 堆顶元素最大，需要降序排序
+        minHeap = new PriorityQueue<int, int>();
+    }
+    
+    public void AddNum(int num) {
+        if(maxHeap.Count == 0 || num <= maxHeap.Peek()) {
+            // 如果大顶堆为空，或添加的数比中位数小，加入较小的一半
+            maxHeap.Enqueue(num, num);
+        } else {
+            // 否则加入最大的一半
+            minHeap.Enqueue(num, num);
+        }
+
+        // 平衡maxHeap和minHeap的个数，使得maxHeap的大小等于或比minHeap大1
+        if(maxHeap.Count < minHeap.Count) {
+            // maxHeap过小，要从minHeap移一个元素过来
+            int minHeapNum = minHeap.Dequeue();
+            maxHeap.Enqueue(minHeapNum, minHeapNum);
+        } else if(maxHeap.Count > minHeap.Count + 1) {
+            // maxHeap过大，要移出一个元素到minHeap
+            int maxHeapNum = maxHeap.Dequeue();
+            minHeap.Enqueue(maxHeapNum, maxHeapNum);
+        }
+    }
+    
+    public double FindMedian() {
+        if(maxHeap.Count > minHeap.Count) {
+            // 奇数个元素
+            return (double)maxHeap.Peek();
+        } else {
+            // 偶数个元素
+            return (maxHeap.Peek() + minHeap.Peek())/2.0;
+        }
+    }
+}
+```
+
+## [67. 二进制求和](https://leetcode.cn/problems/add-binary/)
+
+给你两个二进制字符串 `a` 和 `b` ，以二进制字符串的形式返回它们的和。
+
+**示例 1：**
+
+```
+输入:a = "11", b = "1"
+输出："100"
+```
+
+**示例 2：**
+
+```
+输入：a = "1010", b = "1011"
+输出："10101"
+```
+
+> **思路一：内置API，但是字符串长度过长时会报错：Value was either too large or too small for a UInt32。**
+
+```cs
+public class Solution {
+    public string AddBinary(string a, string b) {
+        // 将二进制字符串转换为十进制整数
+        int num1 = Convert.ToInt32(a, 2);
+        int num2 = Convert.ToInt32(b, 2);
+
+        // 相加并转换回二进制字符串
+        return Convert.ToString(num1 + num2, 2);
+    }
+}
+```
+
+> **思路二：字符串处理，需要考虑进位。**
+
+```cs
+public class Solution {
+    public string AddBinary(string a, string b) {
+        StringBuilder result = new StringBuilder();
+        int i = a.Length - 1;
+        int j = b.Length - 1;
+        int carry = 0;
+
+        while (i >= 0 || j >= 0 || carry > 0)
+        {
+            int digit1 = (i >= 0) ? a[i] - '0' : 0; // 第一个数
+            int digit2 = (j >= 0) ? b[j] - '0' : 0; // 第二个数
+            i--; j--;
+
+            int sum = digit1 + digit2+carry;
+            result.Insert(0, sum % 2); // 奇数插入1，偶数插入0
+            carry = sum / 2; // 如果sum >= 2，则进位
+        }
+
+        return result.ToString();
+    }
+}
+```
+
+## [190. 颠倒二进制位](https://leetcode.cn/problems/reverse-bits/)
+
+颠倒给定的 32 位无符号整数的二进制位。
+
+**提示：**
+
+- 请注意，在某些语言（如 Java）中，没有无符号整数类型。在这种情况下，输入和输出都将被指定为有符号整数类型，并且不应影响您的实现，因为无论整数是有符号的还是无符号的，其内部的二进制表示形式都是相同的。
+- 在 Java 中，编译器使用二进制补码记法来表示有符号整数。因此，在 **示例 2** 中，输入表示有符号整数 `-3`，输出表示有符号整数 `-1073741825`。
+
+**示例 1：**
+
+```
+输入：n = 00000010100101000001111010011100
+输出：964176192 (00111001011110000010100101000000)
+解释：输入的二进制串 00000010100101000001111010011100 表示无符号整数 43261596，
+     因此返回 964176192，其二进制表示形式为 00111001011110000010100101000000。
+```
+
+**示例 2：**
+
+```
+输入：n = 11111111111111111111111111111101
+输出：3221225471 (10111111111111111111111111111111)
+解释：输入的二进制串 11111111111111111111111111111101 表示无符号整数 4294967293，
+     因此返回 3221225471 其二进制表示形式为 10111111111111111111111111111111 。
+```
+
+> **思路：循环32次，每次将`res` 左移一位，取出 `n` 的最低位（`n & 1`），并将其加到 `res` 的最低位，将 `n` 右移一位。**
+
+```csharp
+public class Solution {
+    public uint reverseBits(uint n) {
+        uint res = 0;
+        for(int i=0; i<32; i++) {
+            // 循环32次
+            res = (res << 1) | (n & 1); // 将res左移一位与n的最低位相加
+            n = n >> 1; // n右移一位
+        }
+
+        return res;
+    }
+}
+```
+
