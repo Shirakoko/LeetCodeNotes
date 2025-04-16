@@ -3647,6 +3647,8 @@ public class MedianFinder {
 }
 ```
 
+# 【位运算】
+
 ## [67. 二进制求和](https://leetcode.cn/problems/add-binary/)
 
 给你两个二进制字符串 `a` 和 `b` ，以二进制字符串的形式返回它们的和。
@@ -3746,6 +3748,125 @@ public class Solution {
         }
 
         return res;
+    }
+}
+```
+
+## [191. 位1的个数](https://leetcode.cn/problems/number-of-1-bits/)
+
+给定一个正整数 `n`，编写一个函数，获取一个正整数的二进制形式并返回其二进制表达式中 设置位 的个数（也被称为汉明重量）。
+
+**示例 1：**
+
+```
+输入：n = 11
+输出：3
+解释：输入的二进制串 1011 中，共有 3 个设置位。
+```
+
+**示例 2：**
+
+```
+输入：n = 128
+输出：1
+解释：输入的二进制串 10000000 中，共有 1 个设置位。
+```
+
+**示例 3：**
+
+```
+输入：n = 2147483645
+输出：30
+解释：输入的二进制串 1111111111111111111111111111101 中，共有 30 个设置位。
+```
+
+>  **思路一：内置API杀死比赛。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        uint un = (uint)n;
+        return BitOperations.PopCount(un);
+    }
+}
+```
+
+> **思路二：每次判断最后1位是否为1，然后右移1位。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        int count = 0;
+        while(n != 0) {
+            count += (n & 1); // 检查最后一位是否为1，若是，则加入计数
+            n = n >> 1; // n右移一位
+        }
+
+        return count;
+    }
+}
+```
+
+> **思路三：每次用`n = (n - 1) & n`去除最右边的1（`n-1`会把`n`的最右边的1变成0，并且该位右边的所有`0`都会变成`1`）。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        int count = 0;
+        while(n != 0) {
+            n = (n - 1) & n;
+            count ++;
+        }
+
+        return count;
+    }
+}
+```
+
+## [136. 只出现一次的数字](https://leetcode.cn/problems/single-number/)
+
+给你一个 **非空** 整数数组 `nums` ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法来解决此问题，且该算法只使用常量额外空间。
+
+**示例 1 ：**
+
+```
+输入：nums = [2,2,1]
+
+输出：1
+```
+
+**示例 2 ：**
+
+```
+输入：nums = [4,1,2,1,2]
+
+输出：4
+```
+
+**示例 3 ：**
+
+```
+输入：nums = [1]
+
+输出：1
+```
+
+> **思路：利用异或运算的性质，出现两次的数字在异或后会被抵消，只出现一次的数字会保留下来。**
+>
+> 1. **任何数和0异或都是它本身：`a ^ 0 = a`**
+> 2. **任何数和自身异或都是0：`a ^ a = 0`**
+> 3. **满足交换律和结合律：`a ^ b ^ a = (a ^ a) ^ b = 0 ^ b = b`**
+
+```cs
+public class Solution {
+    public int SingleNumber(int[] nums) {
+        int result = 0;
+        foreach(int num in nums) {
+            result = result ^ num;
+        }
+        return result;
     }
 }
 ```
