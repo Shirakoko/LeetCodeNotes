@@ -3976,6 +3976,8 @@ public class Solution {
 }
 ```
 
+# 【数学】
+
 ## [9. 回文数](https://leetcode.cn/problems/palindrome-number/)
 
 给你一个整数 `x` ，如果 `x` 是一个回文整数，返回 `true` ；否则，返回 `false` 。
@@ -4302,4 +4304,170 @@ public class Solution {
     }
 }
 ```
+
+## [149. 直线上最多的点数](https://leetcode.cn/problems/max-points-on-a-line/)
+
+给你一个数组 `points` ，其中 `points[i] = [xi, yi]` 表示 **X-Y** 平面上的一个点。求最多有多少个点在同一条直线上。
+
+**示例 1：**
+
+```
+输入：points = [[1,1],[2,2],[3,3]]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]
+输出：4
+```
+
+> **思路：哈希表：每次以一个点为基准点，统计最多有多少相同的斜率。**
+>
+> 1. **对于每个点，计算它与其他所有点形成的直线的斜率。**
+> 2. **使用哈希表统计相同斜率的数量。**
+> 3. **注意处理重复点和垂直直线（斜率为无穷大）的情况。**
+> 4. **最终结果是相同斜率的最大数量加上重复点数量。**
+
+```cs
+public class Solution {
+    public int MaxPoints(int[][] points) {
+        if(points.Length <= 2) {
+            // 一个点或两个点的时候，每个点都在同一条直线上
+            return points.Length;
+        }
+
+        int maxPoint = 0;
+        for(int i=0; i<points.Length; i++) {
+            // 遍历每一个点，把它作为基准点point1
+            int[] point1 = points[i];
+            // 用一个字典记录斜率的个数
+            Dictionary<string, int> slopeCountDict = new Dictionary<string, int>();
+            // 记录个数最多的斜率的个数
+            int currentMax = 0;
+            // 记录重叠的点，初始为1（算上自己）
+            int duplicate = 1;
+            
+            for(int j=0; j<points.Length; j++) {
+                if(i != j) {
+                    // 遍历除它之外的其他点，记为point2
+                    int[] point2 = points[j];
+                    int x1 = point1[0]; int x2 = point2[0];
+                    int y1 = point1[1]; int y2 = point2[1];
+
+                    if(x1 == x2 && y1 == y2) {
+                        duplicate++; // 记录重叠点个数
+                        continue;
+                    }
+
+                    // 得到斜率key，增加字典计数
+                    string slopeKey = GetSlopeKey(x1, y1, x2, y2);
+                    if(slopeCountDict.ContainsKey(slopeKey)) {
+                        slopeCountDict[slopeKey]++;
+                    } else {
+                        slopeCountDict[slopeKey] = 1;
+                    }
+                }
+            }
+
+            // 更新当前最大斜率个数
+            currentMax = slopeCountDict.Values.Max();
+            // 更新全局结果，注意要加上重叠点个数
+            maxPoint = Math.Max(maxPoint, currentMax + duplicate);
+        }
+
+        return maxPoint;
+    }
+
+    // 辅助函数：得到某两个点的斜率的key，相同的斜率有相同的key
+    private string GetSlopeKey(int x1, int y1, int x2, int y2) {
+        int dx = x1 - x2;
+        int dy = y1 - y2;
+
+        if (dx == 0) {
+            return "vertical"; // 垂直
+        }
+
+        if (dy == 0) {
+            return "horizontal"; // 水平
+        }
+
+        // 计算dx和dy的最大公约数来简化分数
+        int gcd = GCD(dx, dy);
+        dx = dx / gcd;
+        dy = dy / gcd;
+
+        // 统一符号，dx统一为正数
+        if (dx < 0) {
+            dx = -dx;
+            dy = -dy;
+        }
+
+        return $"{dx}/{dy}";
+    }
+
+    // 辅助函数：计算最大公约数，原理是gcd(a, b) = gcd(b, a % b)
+    private int GCD(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+}
+```
+
+# 【一维动态规划】
+
+## [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+假设你正在爬楼梯。需要 `n` 阶你才能到达楼顶。
+
+每次你可以爬 `1` 或 `2` 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+**示例 1：**
+
+```
+输入：n = 2
+输出：2
+解释：有两种方法可以爬到楼顶。
+1. 1 阶 + 1 阶
+2. 2 阶
+```
+
+**示例 2：**
+
+```
+输入：n = 3
+输出：3
+解释：有三种方法可以爬到楼顶。
+1. 1 阶 + 1 阶 + 1 阶
+2. 1 阶 + 2 阶
+3. 2 阶 + 1 阶
+```
+
+> **思路：一维动态规划，最后一步可能跨了一级台阶，也可能跨了两级台阶。**
+
+```cs
+public class Solution {
+    public int ClimbStairs(int n) {
+        if(n <= 1) {
+            return 1;
+        }
+
+        int[] dp = new int[n+1]; // dp[i]表示到达i的方法个数
+        dp[0] = 1; dp[1] = 1;
+
+        for(int i=2; i<=n; i++) {
+            dp[i] = dp[i-1] + dp[i-2]; // 状态转移方程
+        }
+
+        return dp[n];
+    }
+}
+```
+
+# 【多维动态规划】
 
