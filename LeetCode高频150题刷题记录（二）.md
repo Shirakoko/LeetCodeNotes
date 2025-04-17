@@ -4057,3 +4057,249 @@ public class Solution {
 }
 ```
 
+## [66. 加一](https://leetcode.cn/problems/plus-one/)
+
+给定一个由 **整数** 组成的 **非空** 数组所表示的非负整数，在该数的基础上加一。
+
+最高位数字存放在数组的首位， 数组中每个元素只存储**单个**数字。
+
+你可以假设除了整数 0 之外，这个整数不会以零开头。
+
+**示例 1：**
+
+```
+输入：digits = [1,2,3]
+输出：[1,2,4]
+解释：输入数组表示数字 123。
+```
+
+**示例 2：**
+
+```
+输入：digits = [4,3,2,1]
+输出：[4,3,2,2]
+解释：输入数组表示数字 4321。
+```
+
+**示例 3：**
+
+```
+输入：digits = [9]
+输出：[1,0]
+解释：输入数组表示数字 9。
+加 1 得到了 9 + 1 = 10。
+因此，结果应该是 [1,0]。
+```
+
+> **思路一（会溢出）：数组转换成整型，+1后再转换回数组。**
+
+```cs
+public class Solution {
+    public int[] PlusOne(int[] digits) {
+        int num = 0;
+        foreach(int digit in digits) {
+            num = num * 10 + digit;
+        }
+
+        num = num + 1;
+        List<int> result = new List<int>();
+
+        while(num > 0) {
+            result.Insert(0, num % 10);
+            num = num / 10;
+        }
+
+        return result.ToArray();
+    }
+}
+```
+
+> **思路二：直接操作数组，模拟手工加法过程。从数组的最后一位开始遍历，如果当前位小于 9，直接加 1 并返回结果；如果当前位是 9，则将其置为 0，并继续向高位进位；如果所有位都是 9（例如 `[9,9,9]`），则加 1 后会多出一位（`[1,0,0,0]`），创建一个长度增加 1 的新数组，并将最高位设为 1。**
+
+```cs
+public class Solution {
+    public int[] PlusOne(int[] digits) {
+        for(int i = digits.Length - 1; i >= 0; i--) {
+            if(digits[i] < 9) {
+                // 如果当前位小于 9，直接加 1 并返回结果
+                digits[i] ++;
+                return digits;
+            }
+
+            digits[i] = 0; // 进位
+        }
+
+        // 如果所有的位都为9，需要增加一位为1xxxx...
+        int[] newDigits = new int[digits.Length + 1];
+        newDigits[0] = 1;
+        return newDigits;
+    }
+}
+```
+
+## [172. 阶乘后的零](https://leetcode.cn/problems/factorial-trailing-zeroes/)
+
+给定一个整数 `n` ，返回 `n!` 结果中尾随零的数量。
+
+提示 `n! = n * (n - 1) * (n - 2) * ... * 3 * 2 * 1`
+
+**示例 1：**
+
+```
+输入：n = 3
+输出：0
+解释：3! = 6 ，不含尾随 0
+```
+
+**示例 2：**
+
+```
+输入：n = 5
+输出：1
+解释：5! = 120 ，有一个尾随 0
+```
+
+**示例 3：**
+
+```
+输入：n = 0
+输出：0
+```
+
+> **思路：末尾有多少个零取决于这个数能被 10 整除多少次，而 10 可以分解为 2 × 5。因此，`n!` 末尾的零的数量是由 `n!` 的质因数分解中 2 和 5 的个数决定的。由于在阶乘中，2 的因子比 5 的因子多（偶数比 5 的倍数更频繁出现），所以末尾零的数量由 `n!` 中 5 的因子的个数决定。**
+>
+> 1. **遍历 `n` 的每个可能的 5 的幂次（5, 25, 125, ...）。**
+> 2. **将 `n` 除以这些幂次并累加商，得到 5 的因子总数。**
+
+```cs
+public class Solution {
+    public int TrailingZeroes(int n) {
+        int count = 0;
+        while (n > 0) {
+            n /= 5;
+            count += n;
+        }
+        return count;
+    }
+}
+```
+
+## [69. x 的平方根 ](https://leetcode.cn/problems/sqrtx/)
+
+给你一个非负整数 `x` ，计算并返回 `x` 的 **算术平方根** 。
+
+由于返回类型是整数，结果只保留 **整数部分** ，小数部分将被 **舍去 。**
+
+**注意：**不允许使用任何内置指数函数和算符，例如 `pow(x, 0.5)` 或者 `x ** 0.5` 。
+
+**示例 1：**
+
+```
+输入：x = 4
+输出：2
+```
+
+**示例 2：**
+
+```
+输入：x = 8
+输出：2
+解释：8 的算术平方根是 2.82842..., 由于返回类型是整数，小数部分将被舍去。
+```
+
+> **思路一：线性搜索。**
+
+```cs
+public class Solution {
+    public int MySqrt(int x) {
+        if (x == 0) return 0;
+        int result = 0;
+        for(int i = 1; i <= x / i; i++) { // 避免溢出
+            result = i;
+        }
+
+        return result;
+    }
+}
+```
+
+> **思路二：二分搜索。**
+
+```cs
+public class Solution {
+    public int MySqrt(int x) {
+        if (x == 0) return 0;
+        
+        int result = 0;
+        int left = 1; int right = x;
+        while(left <= right) {
+            int mid = (left + right) / 2;
+            if(mid <= x / mid) { // 防止溢出
+                result = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## [50. Pow(x, n)](https://leetcode.cn/problems/powx-n/)
+
+实现 pow(x, n)，即计算 `x` 的整数 `n` 次幂函数（即，`xn` ）。
+
+**示例 1：**
+
+```
+输入：x = 2.00000, n = 10
+输出：1024.00000
+```
+
+**示例 2：**
+
+```
+输入：x = 2.10000, n = 3
+输出：9.26100
+```
+
+**示例 3：**
+
+```
+输入：x = 2.00000, n = -2
+输出：0.25000
+解释：2-2 = 1/22 = 1/4 = 0.25
+```
+
+> **思路：二分递归法，将 `x^n` 分解为 `x^(n/2) * x^(n/2)`（如果 `n` 是偶数），或者 `x^(n/2) * x^(n/2) * x`（如果 `n` 是奇数）。**
+
+```cs
+public class Solution {
+    public double MyPow(double x, int n) {
+        if(n == 0) {
+            return 1.0;
+        }
+
+        if(n < 0) {
+            // 处理 n = -2147483648 的情况，避免溢出
+            if(n == int.MinValue) {
+                return 1.0 / (MyPow(x, -(n + 1)) * x);
+            }
+            // 转换成正数幂再取1/n
+            return 1.0 / MyPow(x, -n);
+        }
+
+        double half = MyPow(x, n / 2);
+        if(n % 2 == 1) {
+            // 奇数，要多乘一个x
+            return half * half * x;
+        } else {
+            // 偶数
+            return half * half;
+        }
+    }
+}
+```
+
