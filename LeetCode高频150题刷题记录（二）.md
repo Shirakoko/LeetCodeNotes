@@ -3525,19 +3525,207 @@ public class Solution {
     }
 }
 ```
+## [502. IPO](https://leetcode.cn/problems/ipo/)
 
+假设 力扣（LeetCode）即将开始 **IPO** 。为了以更高的价格将股票卖给风险投资公司，力扣 希望在 IPO 之前开展一些项目以增加其资本。 由于资源有限，它只能在 IPO 之前完成最多 `k` 个不同的项目。帮助 力扣 设计完成最多 `k` 个不同项目后得到最大总资本的方式。
 
+给你 `n` 个项目。对于每个项目 `i` ，它都有一个纯利润 `profits[i]` ，和启动该项目需要的最小资本 `capital[i]` 。
 
+最初，你的资本为 `w` 。当你完成一个项目时，你将获得纯利润，且利润将被添加到你的总资本中。
 
+总而言之，从给定项目中选择 **最多** `k` 个不同项目的列表，以 **最大化最终资本** ，并输出最终可获得的最多资本。
 
+答案保证在 32 位有符号整数范围内。
 
+**示例 1：**
 
+```
+输入：k = 2, w = 0, profits = [1,2,3], capital = [0,1,1]
+输出：4
+解释：
+由于你的初始资本为 0，你仅可以从 0 号项目开始。
+在完成后，你将获得 1 的利润，你的总资本将变为 1。
+此时你可以选择开始 1 号或 2 号项目。
+由于你最多可以选择两个项目，所以你需要完成 2 号项目以获得最大的资本。
+因此，输出最后最大化的资本，为 0 + 1 + 3 = 4。
+```
 
+**示例 2：**
 
+```
+输入：k = 3, w = 0, profits = [1,2,3], capital = [0,1,2]
+输出：6
+```
 
+> **思路：贪心+堆排序。**
+>
+> 1. **项目排序：将所有项目按照所需资本`capital`进行排序。**
+> 2. **堆存储：使用大顶堆或优先队列存储可执行项目的利润。**
+> 3. **贪心选择：因为资本`w`只会越来越多，每次选择当前资本`w`能负担得起的项目中利润最大的项目执行。**
+> 4. **更新资本：执行项目后，增加资本`w`以便下一轮选择，直到完成`k`个项目或没有可选择的项目时停止。**
 
+```cs
+public class Solution {
+    public int FindMaximizedCapital(int k, int w, int[] profits, int[] capital) {
+        // 1. 组合并排序项目（按照capital升序）
+        List<(int cap, int pro)> projects = new List<(int cap, int pro)>();
+        for(int i=0; i<profits.Length; i++) {
+            projects.Add((capital[i], profits[i]));
+        }
+        projects.Sort((x, y) => x.cap.CompareTo(y.cap));
 
+        // 2. 手动实现最大堆
+        MaxHeap maxHeap = new MaxHeap();
+        int projectIdx = 0;
 
+        // 3.执行最多k个项目
+        for(int i=0; i<k; i++) {
+            // 先添加所有可执行的项目（的利润）到堆中
+            // 因为w只会越来越大，所以每次循环时，排在后面的项目可能会依次添加进来
+            while(projectIdx < projects.Count && projects[projectIdx].cap <= w) {
+                maxHeap.Push(projects[projectIdx].pro);
+                projectIdx++;
+            }
+
+            // 如果没有项目可以执行，则提前终止
+            if(maxHeap.Count == 0) {
+                break;
+            }
+
+            // 执行利润最大的项目
+            w += maxHeap.Pop();
+        }
+
+        return w;
+    }
+
+    // 辅助数据结构：手动实现大顶堆数组
+    private class MaxHeap {
+        private List<int> heap = new List<int>();
+        public int Count => heap.Count;
+
+        // 插入元素
+        public void Push(int val) {
+            heap.Add(val); // 新元素插入到末尾
+            HeapifyUp(heap.Count - 1); // 新元素上浮
+        }
+
+        // 取出堆顶元素
+        public int Pop() {
+            if (heap.Count == 0) throw new InvalidOperationException();
+
+            int max = heap[0];
+            heap[0] = heap[heap.Count - 1]; // 把最后一个元素填充到堆顶
+            heap.RemoveAt(heap.Count - 1); // 移除最后一个元素，减少堆的大小
+
+            HeapifyDown(0); // 堆顶元素下沉，维护大顶堆性质
+            return max;
+        }
+
+        private void HeapifyUp(int index) {
+            while(index > 0) {
+                int parent = (index - 1) / 2;
+                if(heap[parent] >= heap[index]) {
+                    break;
+                }
+                Swap(index, parent);
+                index = parent;
+            }
+        }
+
+        private void HeapifyDown(int index) {
+            int left = 2*index+1;
+            int right = 2*index+2;
+            int lagest = index;
+
+            if(left<heap.Count && heap[left] > heap[lagest]) {
+                lagest = left;
+            }
+
+            if(right<heap.Count && heap[right] > heap[lagest]) {
+                lagest = right;
+            }
+
+            if(lagest != index) {
+                Swap(index, lagest);
+                HeapifyDown(lagest); // 递归，继续下沉
+            }
+        }
+
+        private void Swap(int i, int j) {
+            int temp = heap[i];
+            heap[i] = heap[j];
+            heap[j] = temp;
+        }
+    }
+}
+```
+
+## [373. 查找和最小的 K 对数字](https://leetcode.cn/problems/find-k-pairs-with-smallest-sums/)
+
+给定两个以 **非递减顺序排列** 的整数数组 `nums1` 和 `nums2` , 以及一个整数 `k` 。
+
+定义一对值 `(u,v)`，其中第一个元素来自 `nums1`，第二个元素来自 `nums2` 。
+
+请找到和最小的 `k` 个数对 `(u1,v1)`, ` (u2,v2)` ...  `(uk,vk)` 。
+
+**示例 1:**
+
+```
+输入: nums1 = [1,7,11], nums2 = [2,4,6], k = 3
+输出: [1,2],[1,4],[1,6]
+解释: 返回序列中的前 3 对数：
+     [1,2],[1,4],[1,6],[7,2],[7,4],[11,2],[7,6],[11,4],[11,6]
+```
+
+**示例 2:**
+
+```
+输入: nums1 = [1,1,2], nums2 = [1,2,3], k = 2
+输出: [1,1],[1,1]
+解释: 返回序列中的前 2 对数：
+     [1,1],[1,1],[1,2],[2,1],[1,2],[2,2],[1,3],[1,3],[2,3]
+```
+
+> **思路：优先队列中存储的元素是下标对`(u, v)`，用于比较的元素是数对和`nums1[u] + nums2[v]`。由于 `nums1` 和 `nums2` 都是升序的，最小的和一定从 `nums1[0]` 和 `nums2[0]` 开始，先把它加入优先队列并标记访问。后续不断从优先队列中取出堆顶元素（当前数对和最小的下标对）加入结果；再加入新的候选对 `(u, v+1)` 或 `(u+1, v)`；直到结果中有`k`个元素或队列为空。**
+
+```cs
+public class Solution {
+    public IList<IList<int>> KSmallestPairs(int[] nums1, int[] nums2, int k) {
+        IList<IList<int>> result = new List<IList<int>>();
+        
+        // 优先队列，存储索引对(u, v)，按(u + v)排序
+        PriorityQueue<(int, int), int> heap = new PriorityQueue<(int, int), int>();
+        // 记录已经访问过的索引对，避免重复访问
+        HashSet<(int, int)> visited = new HashSet<(int, int)>();
+
+        // 初始加入(0, 0）和nums1[0] + nums2[0]，并标记(0, 0)已访问
+        heap.Enqueue((0, 0), nums1[0] + nums2[0]);
+        visited.Add((0, 0));
+
+        while(k > 0 && heap.Count > 0) {
+            var (u, v) = heap.Dequeue(); // 当前堆顶元素为和最小的对
+            result.Add(new List<int>(){nums1[u], nums2[v]}); // 出队，加入结果
+
+            // 检查(u, v+1)，如果索引合法且没被访问过，入队并标记访问
+            if(v+1 < nums2.Length && visited.Contains((u, v+1)) == false) {
+                heap.Enqueue((u, v+1), nums1[u]+nums2[v+1]);
+                visited.Add((u, v+1));
+            }
+
+            // 检查(u+1, v)，如果索引合法且没被访问过，入队并标记访问
+            if(u+1 < nums1.Length && visited.Contains((u+1, v)) == false) {
+                heap.Enqueue((u+1, v), nums1[u+1]+nums2[v]);
+                visited.Add((u+1, v));
+            }
+
+            k--;
+        }
+
+        return result;
+    }
+}
+```
 
 ## [295. 数据流的中位数](https://leetcode.cn/problems/find-median-from-data-stream/)
 
