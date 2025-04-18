@@ -4659,3 +4659,364 @@ public class Solution {
 ```
 
 # 【多维动态规划】
+
+## [120. 三角形最小路径和](https://leetcode.cn/problems/triangle/)
+
+给定一个三角形 `triangle` ，找出自顶向下的最小路径和。
+
+每一步只能移动到下一行中相邻的结点上。**相邻的结点** 在这里指的是 **下标** 与 **上一层结点下标** 相同或者等于 **上一层结点下标 + 1** 的两个结点。也就是说，如果正位于当前行的下标 `i` ，那么下一步可以移动到下一行的下标 `i` 或 `i + 1` 。
+
+**示例 1：**
+
+```
+输入：triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]
+输出：11
+解释：如下面简图所示：
+   2
+  3 4
+ 6 5 7
+4 1 8 3
+自顶向下的最小路径和为 11（即，2 + 3 + 5 + 1 = 11）。
+```
+
+**示例 2：**
+
+```
+输入：triangle = [[-10]]
+输出：-10
+```
+
+> **思路一：二维数组动态规划。`dp[i, j]`表示从`triangle[i][j]`个元素到底边的最小路径和。对于最后一行，最小路径和就是元素本身。从倒数第二行开始，对于每个元素，取下层可选元素中较小的一个与当前元素相加，依次向上填充dp数组，最终得到的`dp[0][0]`就是自顶向下的最小路径和。**
+
+```cs
+public class Solution {
+    public int MinimumTotal(IList<IList<int>> triangle) {
+        int rowCount = triangle.Count;
+        int[,] dp = new int[rowCount, rowCount]; // dp[i, j]表示点triangle[i][j]到底边的最小路径和
+
+        // 初始化dp数组为无穷大，最后一行就是底边，到底边的路径和就是本身
+        for(int i=0; i<rowCount; i++) {
+            for(int j=0; j<rowCount; j++) {
+                dp[i, j] = int.MaxValue;
+            }
+        }
+        for(int i=0; i<rowCount; i++) {
+            dp[rowCount-1, i] = triangle[rowCount-1][i];
+        }
+
+        // 从倒数第二行开始，填充dp数组
+        for(int row = rowCount - 2; row >= 0; row --) {
+            for(int col = 0; col <= row; col ++) {
+                // 取下一层可选元素中较小的一个，与当前元素相加
+                dp[row, col] = Math.Min(dp[row+1, col], dp[row+1, col+1]) + triangle[row][col];
+            }
+        }
+
+        return dp[0, 0];
+    }
+}
+```
+
+> **思路二：一维数组动态规划。在上个解法中，发现`dp[row][col]` 只依赖于 `dp[row+1][col]` 和 `dp[row+1][col+1]`，即当前行只依赖下一行的数据，因此可以用一维数组 `dp` 来存储当前正在计算的行，并在计算过程中覆盖旧数据，而不需要存储整个二维数组。**
+
+```cs
+public class Solution {
+    public int MinimumTotal(IList<IList<int>> triangle) {
+        int rowCount = triangle.Count;
+        int[] dp = new int[rowCount]; // dp[i]表示triangle中当前行的第j列到底边的最小路径和
+
+        // 初始化dp数组为无穷大，最后一行就是底边，到底边的路径和就是本身
+        for(int i=0; i<rowCount; i++) {
+            for(int j=0; j<rowCount; j++) {
+                dp[i] = int.MaxValue;
+            }
+        }
+        for(int i=0; i<rowCount; i++) {
+            dp[i] = triangle[rowCount-1][i];
+        }
+
+        // 从倒数第二行开始，填充dp数组
+        for(int row = rowCount - 2; row >= 0; row --) {
+            for(int col = 0; col <= row; col ++) {
+                // 取下一层可选元素中较小的一个，与当前元素相加
+                dp[col] = Math.Min(dp[col], dp[col+1]) + triangle[row][col];
+            }
+        }
+
+        return dp[0];
+    }
+}
+```
+
+## [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+给定一个包含非负整数的 `m x n` 网格 `grid` ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+**说明：**每次只能向下或者向右移动一步。
+
+**示例 1：**
+
+```
+输入：grid = [[1,3,1],[1,5,1],[4,2,1]]
+输出：7
+解释：因为路径 1→3→1→1→1 的总和最小。
+```
+
+**示例 2：**
+
+```
+输入：grid = [[1,2,3],[4,5,6]]
+输出：12
+```
+
+> **思路：二维数组动态规划，因为`grid[i][j]`的最小路径和仅取决于 `grid[i-1][j]`（上方格子）和 `grid[i][j-1]`（左方格子），因此可按照从上到下、从左到右的顺序直接覆盖grid而不用另外开辟数组，修改 `grid[i][j]` 后，它仍然可以被 `grid[i+1][j]` 或 `grid[i][j+1]` 使用，不会破坏后续计算。**
+
+```cs
+public class Solution {
+    public int MinPathSum(int[][] grid) {
+        int m = grid.Length;
+        int n = grid[0].Length;
+
+        // 初始化第一行
+        for (int j = 1; j < n; j++) {
+            grid[0][j] += grid[0][j - 1];
+        }
+
+        // 初始化第一列
+        for (int i = 1; i < m; i++) {
+            grid[i][0] += grid[i - 1][0];
+        }
+
+        // 填充剩余的格子
+        for (int i = 1; i < m; i++) {
+            for (int j = 1; j < n; j++) {
+                grid[i][j] += Math.Min(grid[i - 1][j], grid[i][j - 1]);
+            }
+        }
+
+        return grid[m - 1][n - 1];
+    }
+}
+```
+
+## [63. 不同路径 II](https://leetcode.cn/problems/unique-paths-ii/)
+
+给定一个 `m x n` 的整数数组 `grid`。一个机器人初始位于 **左上角**（即 `grid[0][0]`）。机器人尝试移动到 **右下角**（即 `grid[m - 1][n - 1]`）。机器人每次只能向下或者向右移动一步。
+
+网格中的障碍物和空位置分别用 `1` 和 `0` 来表示。机器人的移动路径中不能包含 **任何** 有障碍物的方格。
+
+返回机器人能够到达右下角的不同路径数量。
+
+测试用例保证答案小于等于 `2 * 10^9`。
+
+**示例 1：**
+
+```
+输入：obstacleGrid = [[0,0,0],[0,1,0],[0,0,0]]
+输出：2
+解释：3x3 网格的正中间有一个障碍物。
+从左上角到右下角一共有 2 条不同的路径：
+1. 向右 -> 向右 -> 向下 -> 向下
+2. 向下 -> 向下 -> 向右 -> 向右
+```
+
+**示例 2：**
+
+```
+输入：obstacleGrid = [[0,1],[0,0]]
+输出：1
+```
+
+> **思路：二维数组动态规划，在初始化第一行和第一列，以及填充`dp`数组时要考虑障碍物。**
+
+```cs
+public class Solution {
+    public int UniquePathsWithObstacles(int[][] obstacleGrid) {
+        int m = obstacleGrid.Length;
+        int n = obstacleGrid[0].Length;
+
+        // 如果起点和终点走不通，直接返回0
+        if (obstacleGrid[0][0] == 1 || obstacleGrid[m-1][n-1] == 1) {
+            return 0;
+        }
+
+        // dp[i, j]表示从(0, 0)到达(i, j)的路径个数
+        int[,] dp = new int[m, n];
+
+        // 初始化dp的第一行
+        for(int col=0; col<n; col++) {
+            if(obstacleGrid[0][col] == 1) {
+                break; // 如果有障碍物堵住了，直接返回
+            }
+            dp[0, col] = 1;
+        }
+
+        // 初始化dp的第一列 
+        for(int row=0; row<m; row ++) {
+            if(obstacleGrid[row][0] == 1) {
+                break; // 如果有障碍物堵住了，直接返回
+            }
+            dp[row, 0] = 1;
+        }
+
+        // 从第1行和第1列开始填充dp数组
+        for(int row=1; row<m; row++) {
+            for(int col=1; col<n; col++) {
+                // 得到左边的格子路径个数
+                int leftPathCount = dp[row, col-1];
+                // 得到上面的格子路径个数
+                int rightPathCount = dp[row-1, col];
+                // 如果当前格子不是障碍物，到达当前格子的路径个数为两者相加，否则为0
+                dp[row, col] = obstacleGrid[row][col] == 1 ? 0 : leftPathCount + rightPathCount;
+            }
+        }
+
+        return dp[m-1, n-1];
+    }
+}
+```
+
+## [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+
+给你一个字符串 `s`，找到 `s` 中最长的 回文 子串。
+
+**示例 1：**
+
+```
+输入：s = "babad"
+输出："bab"
+解释："aba" 同样是符合题意的答案。
+```
+
+**示例 2：**
+
+```
+输入：s = "cbbd"
+输出："bb"
+```
+
+> **思路一：暴力循环（O(N^3)）。**
+
+```cs
+public class Solution {
+    public string LongestPalindrome(string s) {
+        if(s.Length <= 1) {
+            return s;
+        }
+
+        // 字符个数≥2的情况
+        int maxLen = 1;
+        int maxLenStart = 0;
+        for(int i=1; i<s.Length; i++) {
+            for(int j=0; j<i; j++) {
+                if(IsPlindrome(s, j, i)) {
+                    // 如果当前回文串长度比记录的长，更新maxLen、maxLenStart和maxLenEnd;
+                    if(i-j+1 > maxLen) {
+                        maxLen = i-j+1; maxLenStart = j;
+                    }
+                }
+            }
+        }
+
+        return s.Substring(maxLenStart, maxLen);
+    }
+
+    // 辅助函数，判断一个字符串从[start, end]是不是回文串
+    private bool IsPlindrome(string s, int start, int end) {
+        while(start <= end) {
+            if(s[start] != s[end]) {
+                return false;
+            }
+            start++; end--;
+        }
+
+        return true;
+    }
+}
+```
+
+> **思路二：二维数组动态规划（O(N^2)），`dp[i, j]`表示子串`s[i...j]`是否为回文串，状态转移方程的思路是如果一个子串是回文，那么去掉首尾字符后仍然是回文。**
+
+```cs
+public class Solution {
+    public string LongestPalindrome(string s) {
+        if(s.Length <= 1) {
+            return s;
+        }
+
+        int n = s.Length;
+        bool[,] dp = new bool[n, n]; // dp[i, j]表示子串s[i...j]是否为回文串
+        int start = 0; int maxLen = 1;
+
+        // 长度为1的子串一定是回文串
+        for(int i=0; i<n; i++) {
+            dp[i, i] = true;
+        }
+
+        // 检查长度为2的子串是否是回文串
+        for(int i=0; i<n-1; i++) {
+            if(s[i] == s[i+1]) {
+                dp[i, i+1] = true;
+                start = i; maxLen = 2;
+            }
+        }
+
+        // 填充长度≥3的子串是否是回文串
+        for(int len=3; len<=n; len++) {
+            // 遍历每个长度
+            for(int i=0; i<=n-len; i++) {
+                // 遍历每个起始位置i
+                int j = i+len-1; // 子串的末尾索引j
+                if(dp[i+1, j-1] == true && s[i] == s[j]) {
+                    dp[i, j] = true;
+                    if(len > maxLen) {
+                        maxLen = len;
+                        start = i;
+                    }
+                }
+            }
+        }
+
+        return s.Substring(start, maxLen);
+    }
+}
+```
+
+> **思路三：中心扩展法（O(N^2)），回文串的中心可能是单个字符（奇数长度）或两个相同字符（偶数长度）。可以遍历所有可能的中心，向两边扩展，直到字符不相等为止。**
+
+```cs
+public class Solution {
+    public string LongestPalindrome(string s) {
+        if(s.Length <= 1) {
+            return s;
+        }
+
+        int start = 0; int maxLen = 1;
+        for(int i=0; i<s.Length; i++) {
+            // 遍历每一个可能的中心位置，尝试向外扩展得到最长的回文串长度
+
+            // 奇数长度
+            int len1 = ExpandAroundCenter(s, i, i);
+            // 偶数长度
+            int len2 = ExpandAroundCenter(s, i, i+1);
+
+            int len = Math.Max(len1, len2);
+            if(len > maxLen) {
+                maxLen = len; start = i - (len - 1) / 2;
+            }
+        }
+
+        return s.Substring(start, maxLen);
+    }
+
+    // 辅助函数：计算以left和right为中心的最长回文子串的长度
+    private int ExpandAroundCenter(string s, int left, int right) {
+        while(left >= 0 && right < s.Length && s[left] == s[right]) {
+            left --; right ++;
+        }
+
+        return right - left - 1;
+    }
+}
+```
+
