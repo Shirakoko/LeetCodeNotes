@@ -4658,4 +4658,240 @@ public class Solution {
 }
 ```
 
+## [198. 打家劫舍](https://leetcode.cn/problems/house-robber/)
+
+你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，**如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警**。
+
+给定一个代表每个房屋存放金额的非负整数数组，计算你 **不触动警报装置的情况下** ，一夜之内能够偷窃到的最高金额。
+
+**示例 1：**
+
+```
+输入：[1,2,3,1]
+输出：4
+解释：偷窃 1 号房屋 (金额 = 1) ，然后偷窃 3 号房屋 (金额 = 3)。
+     偷窃到的最高金额 = 1 + 3 = 4 。
+```
+
+**示例 2：**
+
+```
+输入：[2,7,9,3,1]
+输出：12
+解释：偷窃 1 号房屋 (金额 = 2), 偷窃 3 号房屋 (金额 = 9)，接着偷窃 5 号房屋 (金额 = 1)。
+     偷窃到的最高金额 = 2 + 9 + 1 = 12 。
+```
+
+> **思路：一维动态规划。对于房屋数量≥2的情况，使用动态规划解决：**
+>
+> 1. **定义状态：`dp[i]`表示抢到第i+1间房屋时能获得的最大金额（注意数组从0开始）**
+> 2. **初始化状态：**
+>    - **`dp[0] = nums[0]`：只有一间房屋时的最大金额**
+>    - **`dp[1] = max(nums[0], nums[1])`：两间房屋时选择金额较大的**
+> 3. **对于第i间房屋，有两种选择：**
+>    1. **抢劫它：那么不能抢劫i-1，最大金额为`dp[i-2] + nums[i]`**
+>    2. **不抢劫它：最大金额保持为`dp[i-1]`**
+
+```cs
+public class Solution {
+    public int Rob(int[] nums) {
+        int len = nums.Length;
+        if(len == 0) {
+            return 0;
+        }
+        if(len == 1) {
+            return nums[0];
+        }
+
+        // 房屋数量len≥2的情况
+        int[] dp = new int[len]; // dp[i]表示打劫第i+1间房屋最多能获得的钱
+        dp[0] = nums[0]; dp[1] = Math.Max(nums[0], nums[1]);
+        for(int i=2; i<len; i++) {
+            // 状态转移方程，从不打劫它和不打劫它中取最大值
+            dp[i] = Math.Max(dp[i-2]+nums[i], dp[i-1]);
+        }
+
+        return dp[len-1];
+    }
+}
+```
+
+## [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+
+给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+**注意：**不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。 
+
+**示例 1：**
+
+```
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+```
+
+**示例 2：**
+
+```
+输入: s = "applepenapple", wordDict = ["apple", "pen"]
+输出: true
+解释: 返回 true 因为 "applepenapple" 可以由 "apple" "pen" "apple" 拼接成。
+     注意，你可以重复使用字典中的单词。
+```
+
+**示例 3：**
+
+```
+输入: s = "catsandog", wordDict = ["cats", "dog", "sand", "and", "cat"]
+输出: false
+```
+
+> **思路：一维动态规划。**
+>
+> - **`dp[i]` 表示字符串 `s` 的前 `i` 个字符（即 `s[0..i-1]`）是否可以被拆分成字典中的单词。**
+> - **对于每个位置 `i`（从 1 到 `len`），检查所有可能的 `j`（从 0 到 `i-1`）：如果 `dp[j]` 为真（前 `j` 个字符可以被拆分），并且子串 `s[j..i-1]` 存在于字典中,那么 `dp[i]` 也为真。**
+> - **`dp[len]` 就是整个字符串 `s` 是否可以被拆分的结果。**
+
+```cs
+public class Solution {
+    public bool WordBreak(string s, IList<string> wordDict) {
+        HashSet<string> wordDictSet = new HashSet<string>(wordDict);
+        int len = s.Length;
+        bool[] dp = new bool[len+1]; // dp[i]表示s的前i个字符构成的字符串能否被拆分
+        dp[0] = true;
+
+        for(int i=1; i<=len; i++) {
+            for(int j=0; j<i; j++) {
+                if(dp[j] && wordDictSet.Contains(s.Substring(j, i-j))) {
+                    dp[i] = true;
+                    break; // 找到一个可行的拆分即可
+                }
+            }
+        }
+
+        return dp[len];
+    }
+}
+```
+
+## [322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+给你一个整数数组 `coins` ，表示不同面额的硬币；以及一个整数 `amount` ，表示总金额。
+
+计算并返回可以凑成总金额所需的 **最少的硬币个数** 。如果没有任何一种硬币组合能组成总金额，返回 `-1` 。
+
+你可以认为每种硬币的数量是无限的。
+
+**示例 1：**
+
+```
+输入：coins = [1, 2, 5], amount = 11
+输出：3 
+解释：11 = 5 + 5 + 1
+```
+
+**示例 2：**
+
+```
+输入：coins = [2], amount = 3
+输出：-1
+```
+
+**示例 3：**
+
+```
+输入：coins = [1], amount = 0
+输出：0
+```
+
+> **思路：一维动态规划，`dp[i]`表示凑成金额`i`所需的最少硬币数；遍历`i∈[1, amount]`，对于每个金额`i`，遍历每种面额`coin`，检查`i-coin`是否能凑成，如果能则更新`dp[i]`看看能否更小，最后返回`dp[amount]`，如果不能（依然是无穷大）凑成则返回`-1`。**
+
+```cs
+public class Solution {
+    public int CoinChange(int[] coins, int amount) {
+        // dp[i]表示凑成金额i所需的最少金币个数
+        int[] dp = new int[amount + 1];
+        // 初始化：dp[0] = 0，其他为最大值
+        for(int i = 1; i <= amount; i++) {
+            dp[i] = int.MaxValue;
+        }
+
+        for(int i=1; i<=amount; i++) {
+            foreach(int coin in coins) {
+                // 跳过比i大的coin，且只有dp[i-coin]不是无穷大（表明金额i-coin能凑成）
+                if(coin <= i && dp[i-coin] != int.MaxValue) {
+                    // 更新dp[i]，看看能不能更小
+                    dp[i] = Math.Min(dp[i], dp[i-coin]+1);
+                }
+            }
+        }
+
+        return dp[amount] == int.MaxValue ? -1 : dp[amount];
+    }
+}
+```
+
+## [300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+给你一个整数数组 `nums` ，找到其中最长严格递增子序列的长度。
+
+**子序列** 是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，`[3,6,2,7]` 是数组 `[0,3,1,6,2,2,7]` 的子序列。
+
+**示例 1：**
+
+```
+输入：nums = [10,9,2,5,3,7,101,18]
+输出：4
+解释：最长递增子序列是 [2,3,7,101]，因此长度为 4 。
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1,0,3,2,3]
+输出：4
+```
+
+**示例 3：**
+
+```
+输入：nums = [7,7,7,7,7,7,7]
+输出：1
+```
+
+> **思路：动态规划（O(n^2)）**
+>
+> - **定义 `dp[i]`：表示以 `nums[i]` 结尾的最长递增子序列的长度。**
+> - **初始化：每个元素本身至少是一个长度为 1 的子序列，所以 `dp[i] = 1`。**
+> - **状态转移：**
+>   - **对于每个 `i`，遍历 `j` 从 `0` 到 `i-1`。**
+>   - **如果 `nums[j] < nums[i]`，则 `nums[i]` 可以接在 `nums[j]` 后面，此时 `dp[i] = max(dp[i], dp[j] + 1)`。**
+> - **最终结果：`dp` 数组中的最大值（因为最长子序列不一定以最后一个元素结尾）。**
+
+```cs
+public class Solution {
+    public int LengthOfLIS(int[] nums) {
+        int len = nums.Length;
+        if (len == 0) return 0;
+
+        int[] dp = new int[len];
+        for (int i = 0; i < len; i++) {
+            dp[i] = 1; // 初始化为1，因为每个元素本身是一个子序列
+        }
+
+        for (int i = 1; i < len; i++) {
+            for (int j = 0; j < i; j++) {
+                if (nums[j] < nums[i]) {
+                    dp[i] = Math.Max(dp[i], dp[j] + 1);
+                }
+            }
+        }
+
+        return dp.Max(); // 返回dp数组中的最大值
+    }
+}
+```
+
+
+
 # 【多维动态规划】
