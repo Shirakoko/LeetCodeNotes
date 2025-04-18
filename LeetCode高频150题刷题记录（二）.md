@@ -3525,3 +3525,949 @@ public class Solution {
     }
 }
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## [295. 数据流的中位数](https://leetcode.cn/problems/find-median-from-data-stream/)
+
+**中位数**是有序整数列表中的中间值。如果列表的大小是偶数，则没有中间值，中位数是两个中间值的平均值。
+
+- 例如 `arr = [2,3,4]` 的中位数是 `3` 。
+- 例如 `arr = [2,3]` 的中位数是 `(2 + 3) / 2 = 2.5` 。
+
+实现 MedianFinder 类:
+
+- `MedianFinder() `初始化 `MedianFinder` 对象。
+- `void addNum(int num)` 将数据流中的整数 `num` 添加到数据结构中。
+- `double findMedian()` 返回到目前为止所有元素的中位数。与实际答案相差 `10-5` 以内的答案将被接受。
+
+**示例 1：**
+
+```
+输入
+["MedianFinder", "addNum", "addNum", "findMedian", "addNum", "findMedian"]
+[[], [1], [2], [], [3], []]
+输出
+[null, null, null, 1.5, null, 2.0]
+
+解释
+MedianFinder medianFinder = new MedianFinder();
+medianFinder.addNum(1);    // arr = [1]
+medianFinder.addNum(2);    // arr = [1, 2]
+medianFinder.findMedian(); // 返回 1.5 ((1 + 2) / 2)
+medianFinder.addNum(3);    // arr[1, 2, 3]
+medianFinder.findMedian(); // return 2.0
+```
+
+> **思路一：用`List.Sort()`杀死比赛，但是会超时。**
+
+```cs
+public class MedianFinder {
+    List<int> nums;
+
+    public MedianFinder() {
+        nums = new List<int>();
+    }
+    
+    public void AddNum(int num) {
+        nums.Add(num);
+        nums.Sort(); // 升序排序
+    }
+    
+    public double FindMedian() {
+        int count = nums.Count;
+        if(count % 2 == 1) {
+            // 奇数个元素
+            return (double)nums[count/2];
+        } else {
+            // 偶数个元素
+            return (nums[count/2] + nums[count/2 - 1])/2.0;
+        }
+    }
+}
+```
+
+> **思路二：双堆法。**
+>
+> 1. **`maxHeap`（大顶堆）：存储 较小的一半数，堆顶是最大值。**
+> 2. **`minHeap`（小顶堆）：存储 较大的一半数，堆顶是最小值。**
+> 3. **保证 `maxHeap` 的大小 等于或比 `minHeap` 大 1（这样中位数可以直接从堆顶获取）。**
+> 4. **插入新数时，动态调整两个堆的平衡。**
+
+```cs
+public class MedianFinder {
+    PriorityQueue<int, int> maxHeap; // 大顶堆（储存较小的一半）
+    PriorityQueue<int, int> minHeap; // 小顶堆（储存较大的一半）
+
+    public MedianFinder() {
+        maxHeap = new PriorityQueue<int, int>(Comparer<int>.Create((x, y) => y.CompareTo(x))); // 堆顶元素最大，需要降序排序
+        minHeap = new PriorityQueue<int, int>();
+    }
+    
+    public void AddNum(int num) {
+        if(maxHeap.Count == 0 || num <= maxHeap.Peek()) {
+            // 如果大顶堆为空，或添加的数比中位数小，加入较小的一半
+            maxHeap.Enqueue(num, num);
+        } else {
+            // 否则加入最大的一半
+            minHeap.Enqueue(num, num);
+        }
+
+        // 平衡maxHeap和minHeap的个数，使得maxHeap的大小等于或比minHeap大1
+        if(maxHeap.Count < minHeap.Count) {
+            // maxHeap过小，要从minHeap移一个元素过来
+            int minHeapNum = minHeap.Dequeue();
+            maxHeap.Enqueue(minHeapNum, minHeapNum);
+        } else if(maxHeap.Count > minHeap.Count + 1) {
+            // maxHeap过大，要移出一个元素到minHeap
+            int maxHeapNum = maxHeap.Dequeue();
+            minHeap.Enqueue(maxHeapNum, maxHeapNum);
+        }
+    }
+    
+    public double FindMedian() {
+        if(maxHeap.Count > minHeap.Count) {
+            // 奇数个元素
+            return (double)maxHeap.Peek();
+        } else {
+            // 偶数个元素
+            return (maxHeap.Peek() + minHeap.Peek())/2.0;
+        }
+    }
+}
+```
+
+# 【位运算】
+
+## [67. 二进制求和](https://leetcode.cn/problems/add-binary/)
+
+给你两个二进制字符串 `a` 和 `b` ，以二进制字符串的形式返回它们的和。
+
+**示例 1：**
+
+```
+输入:a = "11", b = "1"
+输出："100"
+```
+
+**示例 2：**
+
+```
+输入：a = "1010", b = "1011"
+输出："10101"
+```
+
+> **思路一：内置API，但是字符串长度过长时会报错：Value was either too large or too small for a UInt32。**
+
+```cs
+public class Solution {
+    public string AddBinary(string a, string b) {
+        // 将二进制字符串转换为十进制整数
+        int num1 = Convert.ToInt32(a, 2);
+        int num2 = Convert.ToInt32(b, 2);
+
+        // 相加并转换回二进制字符串
+        return Convert.ToString(num1 + num2, 2);
+    }
+}
+```
+
+> **思路二：字符串处理，需要考虑进位。**
+
+```cs
+public class Solution {
+    public string AddBinary(string a, string b) {
+        StringBuilder result = new StringBuilder();
+        int i = a.Length - 1;
+        int j = b.Length - 1;
+        int carry = 0;
+
+        while (i >= 0 || j >= 0 || carry > 0)
+        {
+            int digit1 = (i >= 0) ? a[i] - '0' : 0; // 第一个数
+            int digit2 = (j >= 0) ? b[j] - '0' : 0; // 第二个数
+            i--; j--;
+
+            int sum = digit1 + digit2+carry;
+            result.Insert(0, sum % 2); // 奇数插入1，偶数插入0
+            carry = sum / 2; // 如果sum >= 2，则进位
+        }
+
+        return result.ToString();
+    }
+}
+```
+
+## [190. 颠倒二进制位](https://leetcode.cn/problems/reverse-bits/)
+
+颠倒给定的 32 位无符号整数的二进制位。
+
+**提示：**
+
+- 请注意，在某些语言（如 Java）中，没有无符号整数类型。在这种情况下，输入和输出都将被指定为有符号整数类型，并且不应影响您的实现，因为无论整数是有符号的还是无符号的，其内部的二进制表示形式都是相同的。
+- 在 Java 中，编译器使用二进制补码记法来表示有符号整数。因此，在 **示例 2** 中，输入表示有符号整数 `-3`，输出表示有符号整数 `-1073741825`。
+
+**示例 1：**
+
+```
+输入：n = 00000010100101000001111010011100
+输出：964176192 (00111001011110000010100101000000)
+解释：输入的二进制串 00000010100101000001111010011100 表示无符号整数 43261596，
+     因此返回 964176192，其二进制表示形式为 00111001011110000010100101000000。
+```
+
+**示例 2：**
+
+```
+输入：n = 11111111111111111111111111111101
+输出：3221225471 (10111111111111111111111111111111)
+解释：输入的二进制串 11111111111111111111111111111101 表示无符号整数 4294967293，
+     因此返回 3221225471 其二进制表示形式为 10111111111111111111111111111111 。
+```
+
+> **思路：循环32次，每次将`res` 左移一位，取出 `n` 的最低位（`n & 1`），并将其加到 `res` 的最低位，将 `n` 右移一位。**
+
+```csharp
+public class Solution {
+    public uint reverseBits(uint n) {
+        uint res = 0;
+        for(int i=0; i<32; i++) {
+            // 循环32次
+            res = (res << 1) | (n & 1); // 将res左移一位与n的最低位相加
+            n = n >> 1; // n右移一位
+        }
+
+        return res;
+    }
+}
+```
+
+## [191. 位1的个数](https://leetcode.cn/problems/number-of-1-bits/)
+
+给定一个正整数 `n`，编写一个函数，获取一个正整数的二进制形式并返回其二进制表达式中 设置位 的个数（也被称为汉明重量）。
+
+**示例 1：**
+
+```
+输入：n = 11
+输出：3
+解释：输入的二进制串 1011 中，共有 3 个设置位。
+```
+
+**示例 2：**
+
+```
+输入：n = 128
+输出：1
+解释：输入的二进制串 10000000 中，共有 1 个设置位。
+```
+
+**示例 3：**
+
+```
+输入：n = 2147483645
+输出：30
+解释：输入的二进制串 1111111111111111111111111111101 中，共有 30 个设置位。
+```
+
+>  **思路一：内置API杀死比赛。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        uint un = (uint)n;
+        return BitOperations.PopCount(un);
+    }
+}
+```
+
+> **思路二：每次判断最后1位是否为1，然后右移1位。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        int count = 0;
+        while(n != 0) {
+            count += (n & 1); // 检查最后一位是否为1，若是，则加入计数
+            n = n >> 1; // n右移一位
+        }
+
+        return count;
+    }
+}
+```
+
+> **思路三：每次用`n = (n - 1) & n`去除最右边的1（`n-1`会把`n`的最右边的1变成0，并且该位右边的所有`0`都会变成`1`）。**
+
+```cs
+public class Solution {
+    public int HammingWeight(int n) {
+        int count = 0;
+        while(n != 0) {
+            n = (n - 1) & n;
+            count ++;
+        }
+
+        return count;
+    }
+}
+```
+
+## [136. 只出现一次的数字](https://leetcode.cn/problems/single-number/)
+
+给你一个 **非空** 整数数组 `nums` ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法来解决此问题，且该算法只使用常量额外空间。
+
+**示例 1 ：**
+
+```
+输入：nums = [2,2,1]
+
+输出：1
+```
+
+**示例 2 ：**
+
+```
+输入：nums = [4,1,2,1,2]
+
+输出：4
+```
+
+**示例 3 ：**
+
+```
+输入：nums = [1]
+
+输出：1
+```
+
+> **思路：利用异或运算的性质，出现两次的数字在异或后会被抵消，只出现一次的数字会保留下来。**
+>
+> 1. **任何数和0异或都是它本身：`a ^ 0 = a`**
+> 2. **任何数和自身异或都是0：`a ^ a = 0`**
+> 3. **满足交换律和结合律：`a ^ b ^ a = (a ^ a) ^ b = 0 ^ b = b`**
+
+```cs
+public class Solution {
+    public int SingleNumber(int[] nums) {
+        int result = 0;
+        foreach(int num in nums) {
+            result = result ^ num;
+        }
+        return result;
+    }
+}
+```
+
+## [137. 只出现一次的数字 II](https://leetcode.cn/problems/single-number-ii/)
+
+给你一个整数数组 `nums` ，除某个元素仅出现 **一次** 外，其余每个元素都恰出现 **三次 。**请你找出并返回那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法且使用常数级空间来解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [2,2,3,2]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1,0,1,0,1,99]
+输出：99
+```
+
+> **思路：统计所有数字的每一位上1出现的总次数，对于出现三次的数字，每位上的1会出现3次，对于只出现一次的数字，每位上的1只会出现1次或0次，因此每位上的1出现的次数对3取模就得到只出现1次的数字在该位的值。**
+
+```cs
+public class Solution {
+    public int SingleNumber(int[] nums) {
+        int result = 0;
+        for(int i=0; i<32; i++) {
+            // 遍历int32位中的每一位
+
+            // 遍历所有数字，统计该位中1出现的次数
+            int sum = 0; 
+            foreach(int num in nums) {
+                sum += (num >> i) & 1;
+            }
+
+            // 对3取模得到只出现一次的数字在该位的值，赋在result的对应位上
+            if(sum % 3 != 0) {
+                result = result | (1<<i);
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## [201. 数字范围按位与](https://leetcode.cn/problems/bitwise-and-of-numbers-range/)
+
+给你两个整数 `left` 和 `right` ，表示区间 `[left, right]` ，返回此区间内所有数字 **按位与** 的结果（包含 `left` 、`right` 端点）。
+
+**示例 1：**
+
+```
+输入：left = 5, right = 7
+输出：4
+```
+
+**示例 2：**
+
+```
+输入：left = 0, right = 0
+输出：0
+```
+
+**示例 3：**
+
+```
+输入：left = 1, right = 2147483647
+输出：0
+```
+
+> **思路一：从`m`到`n`的所有数字的按位与结果等于 `m` 和 `n` 的公共前缀后面补零，逐步右移 `m` 和 `n`，直到它们相等，记录右移的次数；然后左移相同的次数，得到公共前缀。**
+
+```cs
+public class Solution {
+    public int RangeBitwiseAnd(int left, int right) {
+        int shift = 0; // 记录右移的位数
+
+        // left和right不断右移，直到相等
+        while(left != right) {
+            left = left >> 1;
+            right = right >> 1;
+            shift ++;
+        }
+
+        // 最后left（right）是原来left和right的公共前缀，再左移shift位得到按位与结果
+        return left << shift;
+    }
+}
+```
+
+> **思路二：Brian Kernighan算法，每次对`n`和 `number−1` 之间进行按位与运算后，`number`中最右边的1会被抹去变成0，因此可以不断清除`n`最右边的 1，直到它小于或等于`m`，最终得到的`n`就是公共前缀后面补0。**
+
+```cs
+public class Solution {
+    public int RangeBitwiseAnd(int left, int right) {
+        while(left < right) {
+            right = right & (right - 1);
+        }
+
+        return right;
+    }
+}
+```
+
+# 【数学】
+
+## [9. 回文数](https://leetcode.cn/problems/palindrome-number/)
+
+给你一个整数 `x` ，如果 `x` 是一个回文整数，返回 `true` ；否则，返回 `false` 。
+
+回文数是指正序（从左向右）和倒序（从右向左）读都是一样的整数。
+
+- 例如，`121` 是回文，而 `123` 不是。
+
+**示例 1：**
+
+```
+输入：x = 121
+输出：true
+```
+
+**示例 2：**
+
+```
+输入：x = -121
+输出：false
+解释：从左向右读, 为 -121 。 从右向左读, 为 121- 。因此它不是一个回文数。
+```
+
+**示例 3：**
+
+```
+输入：x = 10
+输出：false
+解释：从右向左读, 为 01 。因此它不是一个回文数。
+```
+
+> **思路一：转换成字符串，变成判断是否是回文字符串的问题。**
+
+```cs
+public class Solution {
+    public bool IsPalindrome(int x) {
+        if (x < 0) {
+            return false;
+        }
+        else if (x < 10) {
+            return true;
+        }
+
+        string str = x.ToString();
+        int left = 0; int right = str.Length - 1;
+        while(left < right) {
+            if (str[left] != str[right]) {
+                return false;
+            }
+            left++; right--;
+        }
+
+        return true;
+    }
+}
+```
+
+> **思路二：反转数字，反转后的结果与原数字比较是否相等。**
+
+```cs
+public class Solution {
+    public bool IsPalindrome(int x) {
+        if (x < 0) {
+            return false;
+        }
+        else if (x < 10) {
+            return true;
+        }
+
+        int originalNum = x;
+        int reversedNum = 0;
+        while(x > 0) {
+            reversedNum = reversedNum * 10 + x % 10; // 得到最后一位，赋给reversedNum
+            x = x / 10; // 丢弃最后一位
+        }
+
+        return reversedNum == originalNum;
+    }
+}
+```
+
+## [66. 加一](https://leetcode.cn/problems/plus-one/)
+
+给定一个由 **整数** 组成的 **非空** 数组所表示的非负整数，在该数的基础上加一。
+
+最高位数字存放在数组的首位， 数组中每个元素只存储**单个**数字。
+
+你可以假设除了整数 0 之外，这个整数不会以零开头。
+
+**示例 1：**
+
+```
+输入：digits = [1,2,3]
+输出：[1,2,4]
+解释：输入数组表示数字 123。
+```
+
+**示例 2：**
+
+```
+输入：digits = [4,3,2,1]
+输出：[4,3,2,2]
+解释：输入数组表示数字 4321。
+```
+
+**示例 3：**
+
+```
+输入：digits = [9]
+输出：[1,0]
+解释：输入数组表示数字 9。
+加 1 得到了 9 + 1 = 10。
+因此，结果应该是 [1,0]。
+```
+
+> **思路一（会溢出）：数组转换成整型，+1后再转换回数组。**
+
+```cs
+public class Solution {
+    public int[] PlusOne(int[] digits) {
+        int num = 0;
+        foreach(int digit in digits) {
+            num = num * 10 + digit;
+        }
+
+        num = num + 1;
+        List<int> result = new List<int>();
+
+        while(num > 0) {
+            result.Insert(0, num % 10);
+            num = num / 10;
+        }
+
+        return result.ToArray();
+    }
+}
+```
+
+> **思路二：直接操作数组，模拟手工加法过程。从数组的最后一位开始遍历，如果当前位小于 9，直接加 1 并返回结果；如果当前位是 9，则将其置为 0，并继续向高位进位；如果所有位都是 9（例如 `[9,9,9]`），则加 1 后会多出一位（`[1,0,0,0]`），创建一个长度增加 1 的新数组，并将最高位设为 1。**
+
+```cs
+public class Solution {
+    public int[] PlusOne(int[] digits) {
+        for(int i = digits.Length - 1; i >= 0; i--) {
+            if(digits[i] < 9) {
+                // 如果当前位小于 9，直接加 1 并返回结果
+                digits[i] ++;
+                return digits;
+            }
+
+            digits[i] = 0; // 进位
+        }
+
+        // 如果所有的位都为9，需要增加一位为1xxxx...
+        int[] newDigits = new int[digits.Length + 1];
+        newDigits[0] = 1;
+        return newDigits;
+    }
+}
+```
+
+## [172. 阶乘后的零](https://leetcode.cn/problems/factorial-trailing-zeroes/)
+
+给定一个整数 `n` ，返回 `n!` 结果中尾随零的数量。
+
+提示 `n! = n * (n - 1) * (n - 2) * ... * 3 * 2 * 1`
+
+**示例 1：**
+
+```
+输入：n = 3
+输出：0
+解释：3! = 6 ，不含尾随 0
+```
+
+**示例 2：**
+
+```
+输入：n = 5
+输出：1
+解释：5! = 120 ，有一个尾随 0
+```
+
+**示例 3：**
+
+```
+输入：n = 0
+输出：0
+```
+
+> **思路：末尾有多少个零取决于这个数能被 10 整除多少次，而 10 可以分解为 2 × 5。因此，`n!` 末尾的零的数量是由 `n!` 的质因数分解中 2 和 5 的个数决定的。由于在阶乘中，2 的因子比 5 的因子多（偶数比 5 的倍数更频繁出现），所以末尾零的数量由 `n!` 中 5 的因子的个数决定。**
+>
+> 1. **遍历 `n` 的每个可能的 5 的幂次（5, 25, 125, ...）。**
+> 2. **将 `n` 除以这些幂次并累加商，得到 5 的因子总数。**
+
+```cs
+public class Solution {
+    public int TrailingZeroes(int n) {
+        int count = 0;
+        while (n > 0) {
+            n /= 5;
+            count += n;
+        }
+        return count;
+    }
+}
+```
+
+## [69. x 的平方根 ](https://leetcode.cn/problems/sqrtx/)
+
+给你一个非负整数 `x` ，计算并返回 `x` 的 **算术平方根** 。
+
+由于返回类型是整数，结果只保留 **整数部分** ，小数部分将被 **舍去 。**
+
+**注意：**不允许使用任何内置指数函数和算符，例如 `pow(x, 0.5)` 或者 `x ** 0.5` 。
+
+**示例 1：**
+
+```
+输入：x = 4
+输出：2
+```
+
+**示例 2：**
+
+```
+输入：x = 8
+输出：2
+解释：8 的算术平方根是 2.82842..., 由于返回类型是整数，小数部分将被舍去。
+```
+
+> **思路一：线性搜索。**
+
+```cs
+public class Solution {
+    public int MySqrt(int x) {
+        if (x == 0) return 0;
+        int result = 0;
+        for(int i = 1; i <= x / i; i++) { // 避免溢出
+            result = i;
+        }
+
+        return result;
+    }
+}
+```
+
+> **思路二：二分搜索。**
+
+```cs
+public class Solution {
+    public int MySqrt(int x) {
+        if (x == 0) return 0;
+        
+        int result = 0;
+        int left = 1; int right = x;
+        while(left <= right) {
+            int mid = (left + right) / 2;
+            if(mid <= x / mid) { // 防止溢出
+                result = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+## [50. Pow(x, n)](https://leetcode.cn/problems/powx-n/)
+
+实现 pow(x, n)，即计算 `x` 的整数 `n` 次幂函数（即，`xn` ）。
+
+**示例 1：**
+
+```
+输入：x = 2.00000, n = 10
+输出：1024.00000
+```
+
+**示例 2：**
+
+```
+输入：x = 2.10000, n = 3
+输出：9.26100
+```
+
+**示例 3：**
+
+```
+输入：x = 2.00000, n = -2
+输出：0.25000
+解释：2-2 = 1/22 = 1/4 = 0.25
+```
+
+> **思路：二分递归法，将 `x^n` 分解为 `x^(n/2) * x^(n/2)`（如果 `n` 是偶数），或者 `x^(n/2) * x^(n/2) * x`（如果 `n` 是奇数）。**
+
+```cs
+public class Solution {
+    public double MyPow(double x, int n) {
+        if(n == 0) {
+            return 1.0;
+        }
+
+        if(n < 0) {
+            // 处理 n = -2147483648 的情况，避免溢出
+            if(n == int.MinValue) {
+                return 1.0 / (MyPow(x, -(n + 1)) * x);
+            }
+            // 转换成正数幂再取1/n
+            return 1.0 / MyPow(x, -n);
+        }
+
+        double half = MyPow(x, n / 2);
+        if(n % 2 == 1) {
+            // 奇数，要多乘一个x
+            return half * half * x;
+        } else {
+            // 偶数
+            return half * half;
+        }
+    }
+}
+```
+
+## [149. 直线上最多的点数](https://leetcode.cn/problems/max-points-on-a-line/)
+
+给你一个数组 `points` ，其中 `points[i] = [xi, yi]` 表示 **X-Y** 平面上的一个点。求最多有多少个点在同一条直线上。
+
+**示例 1：**
+
+```
+输入：points = [[1,1],[2,2],[3,3]]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：points = [[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]
+输出：4
+```
+
+> **思路：哈希表：每次以一个点为基准点，统计最多有多少相同的斜率。**
+>
+> 1. **对于每个点，计算它与其他所有点形成的直线的斜率。**
+> 2. **使用哈希表统计相同斜率的数量。**
+> 3. **注意处理重复点和垂直直线（斜率为无穷大）的情况。**
+> 4. **最终结果是相同斜率的最大数量加上重复点数量。**
+
+```cs
+public class Solution {
+    public int MaxPoints(int[][] points) {
+        if(points.Length <= 2) {
+            // 一个点或两个点的时候，每个点都在同一条直线上
+            return points.Length;
+        }
+
+        int maxPoint = 0;
+        for(int i=0; i<points.Length; i++) {
+            // 遍历每一个点，把它作为基准点point1
+            int[] point1 = points[i];
+            // 用一个字典记录斜率的个数
+            Dictionary<string, int> slopeCountDict = new Dictionary<string, int>();
+            // 记录个数最多的斜率的个数
+            int currentMax = 0;
+            // 记录重叠的点，初始为1（算上自己）
+            int duplicate = 1;
+            
+            for(int j=0; j<points.Length; j++) {
+                if(i != j) {
+                    // 遍历除它之外的其他点，记为point2
+                    int[] point2 = points[j];
+                    int x1 = point1[0]; int x2 = point2[0];
+                    int y1 = point1[1]; int y2 = point2[1];
+
+                    if(x1 == x2 && y1 == y2) {
+                        duplicate++; // 记录重叠点个数
+                        continue;
+                    }
+
+                    // 得到斜率key，增加字典计数
+                    string slopeKey = GetSlopeKey(x1, y1, x2, y2);
+                    if(slopeCountDict.ContainsKey(slopeKey)) {
+                        slopeCountDict[slopeKey]++;
+                    } else {
+                        slopeCountDict[slopeKey] = 1;
+                    }
+                }
+            }
+
+            // 更新当前最大斜率个数
+            currentMax = slopeCountDict.Values.Max();
+            // 更新全局结果，注意要加上重叠点个数
+            maxPoint = Math.Max(maxPoint, currentMax + duplicate);
+        }
+
+        return maxPoint;
+    }
+
+    // 辅助函数：得到某两个点的斜率的key，相同的斜率有相同的key
+    private string GetSlopeKey(int x1, int y1, int x2, int y2) {
+        int dx = x1 - x2;
+        int dy = y1 - y2;
+
+        if (dx == 0) {
+            return "vertical"; // 垂直
+        }
+
+        if (dy == 0) {
+            return "horizontal"; // 水平
+        }
+
+        // 计算dx和dy的最大公约数来简化分数
+        int gcd = GCD(dx, dy);
+        dx = dx / gcd;
+        dy = dy / gcd;
+
+        // 统一符号，dx统一为正数
+        if (dx < 0) {
+            dx = -dx;
+            dy = -dy;
+        }
+
+        return $"{dx}/{dy}";
+    }
+
+    // 辅助函数：计算最大公约数，原理是gcd(a, b) = gcd(b, a % b)
+    private int GCD(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+}
+```
+
+# 【一维动态规划】
+
+## [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+假设你正在爬楼梯。需要 `n` 阶你才能到达楼顶。
+
+每次你可以爬 `1` 或 `2` 个台阶。你有多少种不同的方法可以爬到楼顶呢？
+
+**示例 1：**
+
+```
+输入：n = 2
+输出：2
+解释：有两种方法可以爬到楼顶。
+1. 1 阶 + 1 阶
+2. 2 阶
+```
+
+**示例 2：**
+
+```
+输入：n = 3
+输出：3
+解释：有三种方法可以爬到楼顶。
+1. 1 阶 + 1 阶 + 1 阶
+2. 1 阶 + 2 阶
+3. 2 阶 + 1 阶
+```
+
+> **思路：一维动态规划，最后一步可能跨了一级台阶，也可能跨了两级台阶。**
+
+```cs
+public class Solution {
+    public int ClimbStairs(int n) {
+        if(n <= 1) {
+            return 1;
+        }
+
+        int[] dp = new int[n+1]; // dp[i]表示到达i的方法个数
+        dp[0] = 1; dp[1] = 1;
+
+        for(int i=2; i<=n; i++) {
+            dp[i] = dp[i-1] + dp[i-2]; // 状态转移方程
+        }
+
+        return dp[n];
+    }
+}
+```
+
+# 【多维动态规划】
