@@ -5332,3 +5332,94 @@ public class Solution {
 }
 ```
 
+## [72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+给你两个单词 `word1` 和 `word2`， *请返回将 `word1` 转换成 `word2` 所使用的最少操作数* 。
+
+你可以对一个单词进行如下三种操作：
+
+- 插入一个字符
+- 删除一个字符
+- 替换一个字符
+
+**示例 1：**
+
+```
+输入：word1 = "horse", word2 = "ros"
+输出：3
+解释：
+horse -> rorse (将 'h' 替换为 'r')
+rorse -> rose (删除 'r')
+rose -> ros (删除 'e')
+```
+
+**示例 2：**
+
+```
+输入：word1 = "intention", word2 = "execution"
+输出：5
+解释：
+intention -> inention (删除 't')
+inention -> enention (将 'i' 替换为 'e')
+enention -> exention (将 'n' 替换为 'x')
+exention -> exection (将 'n' 替换为 'c')
+exection -> execution (插入 'u')
+```
+
+> **思路：二维动态规划。`dp[i, j]`表示`word1`的前`i`个字符到`word2`的前`j`个字符的编辑距离。状态转移时需要从三种操作中选择最小代价`dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1`：**
+>
+> 1. **插入：`dp[i][j-1] + 1`（在 `word1` 中插入 `word2[j-1]`）**
+> 2. **删除：`dp[i-1][j] + 1`（删除 `word1[i-1]`）**
+> 3. **替换：`dp[i-1][j-1] + 1`（将 `word1[i-1]` 替换为 `word2[j-1]`）**
+
+```cs
+public class Solution {
+    public int MinDistance(string word1, string word2) {
+        int len1 = word1.Length;
+        int len2 = word2.Length;
+
+        if(len1 == 0) {
+            return len2;
+        }
+
+        if(len2 == 0) {
+            return len1;
+        }
+
+        int[,] dp = new int[len1+1, len2+1]; // dp[i, j]表示word1的前i个字符和word2的前j个字符的编辑距离
+        dp[0, 0] = 0;
+
+        // 填充word1到word2前0个字符的编辑距离，让word1一直执行删除操作
+        for(int i=1; i<=len1; i++) {
+            dp[i, 0] = i; 
+        }
+
+        // 填充word2到word1前0个字符的编辑距离，让word2一直执行删除操作
+        for(int j=0; j<=len2; j++) {
+            dp[0, j] = j;
+        }
+
+        // 填充二维动态规划数组
+        for(int i=1; i<=len1; i++) {
+            for(int j=1; j<=len2; j++) {
+                if(word1[i-1] == word2[j-1]) {
+                    // 如果当前两个子串的最后一个字母相同，从word1[0...i-1]和word2[0...j-1]无需额外编辑步骤
+                    // 因为 dp[i-1][j-1] <= dp[i-1][j] 和 dp[i-1][j-1] <= dp[i][j-1] 一定成立，无需三者再GetMin
+                    dp[i, j] = dp[i-1, j-1];
+                } else {
+                    // 否则从word1[0...i-1]和word2[0...j-1]需要一步“替换”步骤
+                    dp[i, j] = GetMin(dp[i-1, j]+1, dp[i, j-1]+1, dp[i-1, j-1]+1);
+                }
+            }
+        }
+
+        return dp[len1, len2];
+    }
+
+    // 辅助函数，得到三个整数的最小值
+    private int GetMin(int a, int b, int c) {
+        return Math.Min(Math.Min(a, b), c);
+    }
+}
+```
+
